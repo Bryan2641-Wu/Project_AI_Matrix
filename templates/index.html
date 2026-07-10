@@ -102,13 +102,17 @@
         const socket = io();
         let currentActiveCam = "{{ first_cam }}";
 
+        // 🌟 核心修復 1：消滅 camId.upper() 錯誤，更正為 JavaScript 的 .toUpperCase()
         function switchMainCamera(camId) {
             currentActiveCam = camId;
             const timestamp = Date.now();
+            
             document.querySelectorAll('.btn-nav').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${camId}`).classList.add('active');
+            
             document.getElementById('current-cam-title').innerText = `🎬 正在監控：${camId.toUpperCase()}`;
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth&t=${timestamp}`;
+            
             document.getElementById('dock-selected-cam-label').innerText = camId.toUpperCase();
             loadBottomRecordings(camId);
         }
@@ -118,21 +122,21 @@
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}&t=${timestamp}`;
         }
 
-        // 🌟 新增：點擊放大按鈕時，切換劇院大盒子的全螢幕放大狀態
+        // 🌟 核心修復 3：消滅紅字蚯蚓線，將 CSS 變數以合規字串傳遞
         function toggleTheaterExpand() {
             const theaterBox = document.getElementById('theater-box');
             if (theaterBox) {
                 theaterBox.classList.toggle('expanded');
-                // 動態調整按鈕文字
                 const btn = document.querySelector('.btn-zoom');
+                
                 if (theaterBox.classList.contains('expanded')) {
                     btn.innerText = "❌ 退出全螢幕";
                     btn.style.background = "#271414";
-                    btn.style.borderColor = "var(--accent-red)";
+                    btn.style.borderColor = "#f87171"; 
                 } else {
                     btn.innerText = "🔎 全螢幕劇院";
                     btn.style.background = "rgba(39, 39, 42, 0.8)";
-                    btn.style.borderColor = "var(--border-color)";
+                    btn.style.borderColor = ""; 
                 }
             }
         }
@@ -168,10 +172,23 @@
                 .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
         }
 
-        socket.on('connect', () => {
-            appendLog('SYSTEM', '👥 已成功與雙向 Socket.IO 通訊對話框建立同步。', 'text-green');
+        // 通訊對話框日誌生成器
+        function appendLog(timeStr, subsystem, message, colorClass = '') {
+            const body = document.getElementById('log-terminal-body');
+            if(!body) return;
+            const line = document.createElement('div');
+            line.className = `log-line ${colorClass}`;
+            line.innerText = `[${timeStr}] [${subsystem}] ${message}`;
+            body.appendChild(line);
+            body.scrollTop = body.scrollHeight; 
+        }
+
+        // 🌟 核心修復 2：聯動接住後端廣播的實時安全日誌事件！
+        socket.on('log_broadcast', (data) => {
+            appendLog(data.time, data.subsystem, data.message, data.color);
         });
 
+        // WebSocket 接收硬體數據
         socket.on('hw_update', (data) => {
             document.getElementById('cpu-text').innerText = `${data.cpu}%`;
             document.getElementById('cpu-progress').style.width = `${data.cpu}%`;

@@ -1,12 +1,12 @@
 # webcam_stream.py
 import os
-import sqlite3
+import sqlite3  
 import hashlib
 import datetime
 import logging
 import asyncio
 import psutil  
-import torch   # 🌟 新增：引入 PyTorch 用於偵測 GPU 狀態
+import torch   
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -33,10 +33,28 @@ logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 def log_system_event(subsystem: str, message: str, level: str = "INFO"):
+    """全域系統日誌記錄器：同時寫入硬碟並透過 WebSocket 廣播至網頁對話框"""
     extra = {"subsystem": subsystem}
     if level == "WARNING": logger.warning(message, extra=extra)
     elif level == "ERROR": logger.error(message, extra=extra)
     else: logger.info(message, extra=extra)
+    
+    # 🌟 核心修復 2：將後端日誌異步安全廣播至前端網頁對話框，讓通訊欄活過來！
+    try:
+        color = "text-red" if level in ["WARNING", "ERROR"] else ("text-green" if subsystem == "SECURITY" else "text-blue")
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('log_broadcast', {
+                    'subsystem': subsystem, 
+                    'message': message, 
+                    'color': color,
+                    'time': datetime.datetime.now().strftime('%H:%M:%S')
+                }),
+                loop
+            )
+    except Exception:
+        pass
 
 # ==================================================
 # 🔌 初始化 Socket.IO 異步雙向監控矩陣
@@ -44,40 +62,29 @@ def log_system_event(subsystem: str, message: str, level: str = "INFO"):
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 cameras = {}
 
-# 🌟 全面升級：硬體背景輪詢器，計算更詳盡的電腦指標
 async def background_hw_monitor():
-    # 初始化網路計數器，用於計算每秒流量
     old_net = psutil.net_io_counters()
-    
     while True:
         try:
-            # 1. CPU & RAM
             cpu_usage = psutil.cpu_percent(interval=None)
             ram_info = psutil.virtual_memory()
             ram_usage = ram_info.percent
             
-            # 2. DISK 硬碟容量偵測 (計算儲存歷史錄影的專用硬碟)
             disk_info = psutil.disk_usage(config.RECORD_DIR)
             disk_usage = disk_info.percent
-            disk_free_gb = round(disk_info.free / (1024 ** 3), 1) # 轉為 GB
+            disk_free_gb = round(disk_info.free / (1024 ** 3), 1)
             
-            # 3. NET 網速動態計算 (每秒流量相減)
             new_net = psutil.net_io_counters()
             sent_bytes = new_net.bytes_sent - old_net.bytes_sent
             recv_bytes = new_net.bytes_recv - old_net.bytes_recv
-            old_net = new_net # 更新計數器
+            old_net = new_net
             
-            # 轉為常見的 Mbps
             net_up_mbps = round((sent_bytes * 8) / (1024 * 1024), 2)
             net_down_mbps = round((recv_bytes * 8) / (1024 * 1024), 2)
             
-            # 4. GPU 顯卡安全偵測
             gpu_name = "NVIDIA GeForce RTX 5070 Ti"
-            gpu_status = "STANDBY" # 去 YOLO 模式下顯卡處於常駐待命狀態
-            if torch.cuda.is_available():
-                gpu_status = "CUDA ACTIVE (OFFLOADED)"
+            gpu_status = "CUDA ACTIVE (OFFLOADED)" if torch.cuda.is_available() else "STANDBY"
 
-            # 透過 WebSocket 將五大數據一體化廣播
             await sio.emit('hw_update', {
                 'cpu': cpu_usage,
                 'ram': ram_usage,
@@ -90,7 +97,7 @@ async def background_hw_monitor():
                 'time': datetime.datetime.now().strftime('%H:%M:%S')
             })
         except Exception as e:
-            print(f"全硬體監控廣播異常: {e}")
+            print(f"硬體監控異常: {e}")
         await asyncio.sleep(1)
 
 # ==================================================
@@ -120,9 +127,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 sio_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
-# ==================================================
-# 🔒 安全性驗證小工具 (SHA-256 資料庫原生比對)
-# ==================================================
 def is_authenticated(request: Request) -> bool:
     return request.cookies.get("session_token") == config.SESSION_TOKEN
 
@@ -217,7 +221,7 @@ def get_recordings_list(cam_id: str, request: Request):
 
 @sio.event
 async def connect(sid, environ): 
-    log_system_event("SECURITY", f"👥 使用者 [admin] 已建立雙向監控連線。")
+    pass # 邏輯移至網頁端 onLoad 或後端登入審計中
 
 if __name__ == "__main__":
     import uvicorn
