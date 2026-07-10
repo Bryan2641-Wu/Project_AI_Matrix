@@ -21,6 +21,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 資料庫與日誌目錄
 DATA_DIR = os.path.join(BASE_DIR, "data")
+DB_PATH = os.path.join(DATA_DIR, "monitor.db")
 LOG_DIR = os.path.join(BASE_DIR, "storage", "logs")       # 🌟 補上這個，解決 LOG_DIR 報錯！
 
 # 多媒體安防儲存目錄
