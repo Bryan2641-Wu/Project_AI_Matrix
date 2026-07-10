@@ -99,24 +99,37 @@ def login_page(request: Request):
         context={}
     )
 
+def verify_password(plain_password: str, stored_password: str) -> bool:
+    try:
+        salt, stored_hash = stored_password.split(":")
+        hash_obj = hashlib.sha256((plain_password + salt).encode('utf-8'))
+        return hash_obj.hexdigest() == stored_hash
+    except Exception: return False
+
 @app.post("/login")
 async def handle_login(request: Request):
     form_data = await request.form()
     username = form_data.get("username")
     password = form_data.get("password")
     
-    if username == config.ADMIN_USER and password == config.ADMIN_PASSWORD:
-        response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-        response.set_cookie(key="session_token", value=config.SESSION_TOKEN, httponly=True)
-        log_system_event("SECURITY", f"🔐 管理員 [{username}] 成功通過二次憑證驗證，簽發安全 Session。")
-        return response
-    
-    log_system_event("SECURITY", f"💥 登入失敗：收到來自未授權帳號 [{username}] 的登入請求！", level="WARNING")
-    return templates.TemplateResponse(
-        request=request, 
-        name="login.html", 
-        context={"error": "帳號或密碼錯誤，拒絕存取。"}
-    )
+    try:
+        # 🌟 連線到剛剛 create_user.py 初始化好的資料庫
+        conn = sqlite3.connect(config.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row and verify_password(password, row[0]):
+            response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+            response.set_cookie(key="session_token", value=config.SESSION_TOKEN, httponly=True)
+            log_system_event("SECURITY", f"🔐 管理員 [{username}] 成功通過資料庫安全性驗證登入系統。")
+            return response
+    except Exception as e:
+        print(f"資料庫讀取異常: {e}")
+
+    log_system_event("SECURITY", f"💥 登入失敗：帳號或密碼不匹配 [{username}] ！", level="WARNING")
+    return templates.TemplateResponse(request=request, name="login.html", context={"error": "帳號或密碼錯誤，拒絕存取。"})
 
 @app.get("/logout")
 def handle_logout():
