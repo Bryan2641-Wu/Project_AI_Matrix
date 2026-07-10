@@ -122,26 +122,38 @@
 
     <script>
         const socket = io();
-        let currentActiveCam = "{{ first_cam }}";
+        let currentActiveCam = "{{ first_cam }}"; // 初始化追蹤當前啟動的相機
 
+        // 🌟 修正點 1：相機通道切換，加入 Date.now() 防瀏覽器快取
         function switchMainCamera(camId) {
             currentActiveCam = camId;
+            const timestamp = Date.now();
+            
+            // 更新上方導航列按鈕的高亮狀態
             document.querySelectorAll('.btn-nav').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${camId}`).classList.add('active');
+            
+            // 刷新大劇院標題與影像流路徑 (強制刷新)
             document.getElementById('current-cam-title').innerText = `🎬 正在監控：${camId.toUpperCase()}`;
-            document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth`;
+            document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth&t=${timestamp}`;
+            
+            // 同步更新底部的錄影檢索欄位標籤並重新拉取清單
             document.getElementById('dock-selected-cam-label').innerText = camId.toUpperCase();
             loadBottomRecordings(camId);
         }
 
+        // 🌟 修正點 2：高低畫質切換，加入 Date.now() 徹底擊穿快取，讓畫質一秒變更！
         function changeTheaterMode(mode) {
-            document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}`;
+            const timestamp = Date.now();
+            document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}&t=${timestamp}`;
         }
 
+        // 快照點擊觸發
         function triggerTheaterSnapshot() {
             window.location.href = `/capture_snapshot/${currentActiveCam}`;
         }
 
+        // 底部分頁籤切換控制邏輯
         function switchDockTab(tabId) {
             document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.dock-tab-content').forEach(content => content.classList.remove('active'));
@@ -149,6 +161,7 @@
             document.getElementById(tabId).classList.add('active');
         }
 
+        // 非同步加載歷史 AVI 影片列表
         function loadBottomRecordings(camId) {
             const ul = document.getElementById('recording-ul');
             ul.innerHTML = '<li class="list-placeholder">正在檢索硬碟錄影檔案...</li>';
@@ -169,6 +182,7 @@
                 .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
         }
 
+        // 通訊對話框日誌生成器
         function appendLog(subsystem, message, colorClass = '') {
             const body = document.getElementById('log-terminal-body');
             if(!body) return;
@@ -177,34 +191,34 @@
             line.className = `log-line ${colorClass}`;
             line.innerText = `[${timeStr}] [${subsystem}] ${message}`;
             body.appendChild(line);
-            body.scrollTop = body.scrollHeight;
+            body.scrollTop = body.scrollHeight; // 自動向下捲動
         }
 
         socket.on('connect', () => {
             appendLog('SYSTEM', '👥 已成功與雙向 Socket.IO 通訊對話框建立同步。', 'text-green');
         });
 
-        // 🌟 核心升級：動態接收並平鋪刷新 5 大全硬體指標
+        // WebSocket 即時接收全硬體動態指標更新
         socket.on('hw_update', (data) => {
-            // 1. CPU & RAM
+            // 1. CPU & RAM 文字與進度條動態注入
             document.getElementById('cpu-text').innerText = `${data.cpu}%`;
             document.getElementById('cpu-progress').style.width = `${data.cpu}%`;
             document.getElementById('ram-text').innerText = `${data.ram}%`;
             document.getElementById('ram-progress').style.width = `${data.ram}%`;
             
-            // 2. DISK 硬碟
+            // 2. DISK 容量
             document.getElementById('disk-text').innerText = `${data.disk_percent}% (${data.disk_free})`;
             document.getElementById('disk-progress').style.width = `${data.disk_percent}%`;
             
-            // 3. NET 網路頻寬
+            // 3. NET 網速
             document.getElementById('net-up-text').innerText = data.net_up;
             document.getElementById('net-down-text').innerText = data.net_down;
             
-            // 4. GPU 顯示卡
+            // 4. GPU 顯示卡常駐資訊
             document.getElementById('gpu-name-text').innerText = data.gpu_name;
             document.getElementById('gpu-status-text').innerText = data.gpu_status;
 
-            // DISK 警示變色 (若硬碟使用率超過 90% 變紅警示)
+            // 超載警示安全機制
             if (data.disk_percent > 90) {
                 document.getElementById('disk-progress').className = "progress-fill fill-red";
             } else {
