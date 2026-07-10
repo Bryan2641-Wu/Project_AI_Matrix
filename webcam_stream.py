@@ -99,6 +99,15 @@ def index_page(request: Request):
         request=request, name="index.html", context={"camera_channels": config.CAMERA_CHANNELS}
     )
 
+# 🌟 新增：全鏡頭電視牆路由
+@app.get("/all_cams", response_class=HTMLResponse)
+def all_cameras_wall(request: Request):
+    if not is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        request=request, name="all_cams.html", context={"camera_channels": config.CAMERA_CHANNELS}
+    )
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={})

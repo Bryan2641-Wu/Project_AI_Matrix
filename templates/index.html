@@ -2,60 +2,157 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>AI Smart Multi-Camera Matrix Central</title>
+    <title>AI Smart Camera Matrix Central</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
     <div id="header-panel">
-        <div class="brand-title">🛡️ AI 智慧安防多鏡頭監控矩陣</div>
-        <div id="hw-metrics">核心高畫質純淨矩陣穩定運行中</div>
+        <div class="brand-title">🛡️ AI 智慧安防主控台</div>
+        
+        <div id="cam-selector-bar">
+            {% for cam_id in camera_channels.keys() %}
+                <button class="btn-nav {% if loop.first %}active{% endif %}" id="btn-{{ cam_id }}" onclick="switchMainCamera('{{ cam_id }}')">
+                    📹 {{ cam_id.upper() }}
+                </button>
+            {% endfor %}
+            <a href="/all_cams" class="btn-nav btn-wall">📺 查看全部監視牆</a>
+        </div>
+
+        <div id="hw-metrics">🟢 核心系統安全掛載中</div>
         <a href="/logout" class="btn-logout">🚪 安全登出</a>
     </div>
 
-    <div id="matrix-container">
-        <div id="video-grid">
-            {% for cam_id, source in camera_channels.items() %}
-                <div class="cam-box" id="box-{{ cam_id }}" onclick="toggleExpand('{{ cam_id }}')">
-                    <div class="cam-title">🎬 頻道: {{ cam_id.upper() }} <span class="zoom-hint">(點擊放大)</span></div>
-                    <img id="stream-{{ cam_id }}" src="/user_access/streaming/{{ cam_id }}?mode=smooth" alt="攝影機線路中斷">
-                    <div class="cam-controls" onclick="event.stopPropagation();">
-                        <button class="btn-action" onclick="changeMode('{{ cam_id }}', 'high')">💎 高畫質</button>
-                        <button class="btn-action" onclick="changeMode('{{ cam_id }}', 'smooth')">⚡ 流暢</button>
-                        <a class="btn-action btn-link" href="/capture_snapshot/{{ cam_id }}">📸 手動截圖</a>
-                    </div>
-                </div>
-            {% endfor %}
+    <div id="main-matrix-layout">
+        
+        <div id="theater-box">
+            {% set first_cam = camera_channels.keys()|list|first %}
+            <div class="theater-title">
+                <span id="current-cam-title">🎬 正在監控：{{ first_cam.upper() }}</span>
+            </div>
+            <img id="main-theater-stream" src="/user_access/streaming/{{ first_cam }}?mode=smooth" alt="攝影機訊號中斷">
             
-            {% if camera_channels|length < 4 %}
-                {% for i in range(4 - (camera_channels|length)) %}
-                    <div class="cam-box backup-grid">
-                        <div class="cam-title">💤 備用監視頻道</div>
-                        <div class="no-signal">NO SIGNAL (等待線路掛載)</div>
-                    </div>
-                {% endfor %}
-            {% endif %}
+            <div class="theater-controls">
+                <button class="btn-action" onclick="changeTheaterMode('high')">💎 切換高畫質</button>
+                <button class="btn-action" onclick="changeTheaterMode('smooth')">⚡ 切換流暢</button>
+                <button class="btn-action" onclick="triggerTheaterSnapshot()">📸 手動截取當前快照</button>
+            </div>
         </div>
 
-        <div id="side-panel">
-            <h3>📁 防斷電歷史錄影回放</h3>
-            <div class="selector-group">
-                <label for="cam-select">選擇相機：</label>
-                <select id="cam-select" onchange="loadRecordingsList()">
-                    {% for cam_id in camera_channels.keys() %}
-                        <option value="{{ cam_id }}">{{ cam_id.upper() }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div id="video-list-box">
-                <ul id="recording-ul">
-                    <li class="list-placeholder">正在載入已封裝的監控列表...</li>
-                </ul>
-            </div>
-        </div>
     </div>
 
-    <script src="/static/js/stream.js"></script>
+    <div id="bottom-dock-panel">
+        
+        <div class="dock-tabs">
+            <button class="tab-link active" onclick="switchDockTab('tab-recordings')">📁 歷史錄影回放</button>
+            <button class="tab-link" onclick="switchDockTab('tab-logs')">💬 即時安防事件日誌</button>
+        </div>
+
+        <div id="tab-recordings" class="dock-tab-content active">
+            <div class="dock-recording-layout">
+                <div class="dock-selector">
+                    <label>當前檢索相機：</label>
+                    <span id="dock-selected-cam-label">{{ first_cam.upper() }}</span>
+                </div>
+                <div id="video-list-box">
+                    <ul id="recording-ul">
+                        <li class="list-placeholder">正在載入已封裝的監控列表...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-logs" class="dock-tab-content">
+            <div id="log-terminal-box">
+                <div class="terminal-header">📟 SECURE AUDIT LIVE LOGS (系統即時通訊對話框)</div>
+                <div id="log-terminal-body">
+                    <div class="log-line text-green">[SYSTEM] 安全核心通訊管道建立，等待即時事件廣播...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const socket = io();
+        let currentActiveCam = "{{ first_cam }}"; // 追蹤當前看哪台相機
+
+        // 💡 需求 1：動態切換中央大畫面的相機源
+        function switchMainCamera(camId) {
+            currentActiveCam = camId;
+            
+            // 1. 變更按鈕高亮狀態
+            document.querySelectorAll('.btn-nav').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${camId}`).classList.add('active');
+            
+            // 2. 刷新中央劇院大畫面
+            document.getElementById('current-cam-title').innerText = `🎬 正在監控：${camId.upper()}`;
+            document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth`;
+            
+            // 3. 連動底部的錄影回放清單標籤
+            document.getElementById('dock-selected-cam-label').innerText = camId.upper();
+            loadBottomRecordings(camId);
+        }
+
+        function changeTheaterMode(mode) {
+            document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}`;
+        }
+
+        function triggerTheaterSnapshot() {
+            window.location.href = `/capture_snapshot/${currentActiveCam}`;
+        }
+
+        // 💡 需求 2：底部分頁切換邏輯
+        function switchDockTab(tabId) {
+            document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.dock-tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // 💡 需求 2：非同步加載底部錄影清單
+        function loadBottomRecordings(camId) {
+            const ul = document.getElementById('recording-ul');
+            ul.innerHTML = '<li class="list-placeholder">正在檢索硬碟錄影檔案...</li>';
+            
+            fetch(`/recordings_list/${camId}`)
+                .then(res => res.json())
+                .then(data => {
+                    ul.innerHTML = '';
+                    if (!data.recordings || data.recordings.length === 0) {
+                        ul.innerHTML = '<li class="list-placeholder">⚠️ 該相機目前暫無歷史錄影檔案</li>';
+                        return;
+                    }
+                    data.recordings.forEach(filename => {
+                        const li = document.createElement('li');
+                        li.innerText = `🎬 ${filename} (防斷電安全封裝)`;
+                        ul.appendChild(li);
+                    });
+                })
+                .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
+        }
+
+        // 💡 需求 3：接收 WebSocket 事件並即時推播到下方對話框
+        socket.on('connect', () => {
+            appendLog('SYSTEM', '👥 與雙向 Socket.IO 通訊矩陣連線成功。', 'green');
+        });
+
+        // 接收來自後端的系統安全日誌（這裡配合同步顯示）
+        function appendLog(subsystem, message, colorClass = '') {
+            const body = document.getElementById('log-terminal-body');
+            const line = document.createElement('div');
+            const timeStr = new Date().toLocaleTimeString();
+            line.className = `log-line ${colorClass}`;
+            line.innerText = `[${timeStr}] [${subsystem}] ${message}`;
+            body.appendChild(line);
+            body.scrollTop = body.scrollHeight; // 自動捲動到最底部
+        }
+
+        window.onload = function() {
+            loadBottomRecordings(currentActiveCam);
+        };
+    </script>
 </body>
 </html>

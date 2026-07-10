@@ -1,433 +1,224 @@
-/* ==================================================
-   🎨 2026 現代暗黑科技風安防美學變數
-   ================================================== */
 :root {
-    --bg-main: #0c0c0e;          /* 深邃底色 */
-    --bg-card: rgba(20, 20, 25, 0.7); /* 毛玻璃卡片底色 */
-    --bg-input: #121216;         /* 輸入框深色 */
-    --border-color: #27272a;     /* 標準暗色邊框 */
-    --border-hover: #10b981;     /* 科技綠發光邊框 */
-    
-    --text-main: #f4f4f5;        /* 高亮文字 */
-    --text-muted: #71717a;       /* 灰暗說明文字 */
-    
-    /* 智能狀態科技色彩 */
-    --accent-green: #10b981;     /* 安全在線 (核心綠) */
-    --accent-red: #ef4444;       /* 警示/離線 (警示紅) */
-    --accent-blue: #3b82f6;      /* 高畫質/串流 (科技藍) */
-    
-    --shadow-neon: rgba(16, 185, 129, 0.2);
-}
-
-/* ==================================================
-   🧱 基礎核心全域重設
-   ================================================== */
-* {
-    box-sizing: border-box;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* 全域平滑動畫 */
+    --bg-main: #09090b;
+    --bg-card: rgba(24, 24, 27, 0.8);
+    --border-color: #27272a;
+    --text-main: #fafafa;
+    --text-muted: #71717a;
+    --accent-green: #10b981;
+    --accent-red: #f87171;
+    --bg-terminal: #040406;
 }
 
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* 防止全域出現雙捲軸 */
     height: 100vh;
-}
-
-/* ==================================================
-   🔐 安全防護門檻：登入牆頁面排版
-   ================================================== */
-.login-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: radial-gradient(circle at center, #13231e 0%, #0c0c0e 70%);
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.login-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px); /* 現代毛玻璃 */
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    padding: 40px;
-    border-radius: 12px;
-    width: 360px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-}
-
-.login-card h2 {
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 30px;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    color: var(--text-main);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px;
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-main);
-    font-size: 14px;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--accent-green);
-    box-shadow: 0 0 10px var(--shadow-neon);
-}
-
-.btn-submit {
-    width: 100%;
-    padding: 12px;
-    background: var(--text-main);
-    color: var(--bg-main);
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.btn-submit:hover {
-    background: var(--accent-green);
-    color: white;
-    box-shadow: 0 0 15px var(--shadow-neon);
-}
-
-/* ==================================================
-   🖥️ 主儀表板：頂部資訊狀態列
-   ================================================== */
+/* 頂部導覽列 */
 #header-panel {
     background: var(--bg-card);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border-color);
-    padding: 14px 24px;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 60px;
 }
 
-.brand-title {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+/* 💡 動態相機按鈕群 */
+#cam-selector-bar {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
-
-#hw-metrics {
-    font-size: 12px;
-    color: var(--accent-green);
-    background: rgba(16, 185, 129, 0.08);
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    font-family: monospace;
-}
-
-.btn-logout {
-    color: var(--accent-red);
-    text-decoration: none;
-    font-size: 12px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+.btn-nav {
+    background: #18181b;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
     padding: 6px 14px;
     border-radius: 6px;
-    background: rgba(239, 68, 68, 0.05);
-    font-weight: 500;
-}
-
-.btn-logout:hover {
-    background: var(--accent-red);
-    color: white;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
-}
-
-/* ==================================================
-   📦 主配置區塊布局 (矩陣大螢幕 + 側邊欄)
-   ================================================== */
-#matrix-container {
-    display: flex;
-    padding: 20px;
-    gap: 20px;
-    height: calc(100vh - 60px); /* 精確扣除 Header 高度 */
-    box-sizing: border-box;
-}
-
-/* 4格對稱大網格 */
-#video-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    flex: 1;
-    gap: 16px;
-    height: 100%;
-}
-
-/* ==================================================
-   📹 監視相機卡片格 (Camera Box)
-   ================================================== */
-.cam-box {
-    background: #000;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-
-.cam-box:hover {
-    border-color: var(--border-hover);
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
-}
-
-/* 頂部文字列 */
-.cam-title {
-    background: rgba(20, 20, 25, 0.85);
-    backdrop-filter: blur(4px);
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    z-index: 10;
-}
-
-.zoom-hint {
-    color: var(--text-muted);
-    font-size: 10px;
-}
-
-/* 核心串流影像主體 */
-.cam-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* 確保 16:9 比例不變形 */
-    flex: 1;
-    background: #020203;
-}
-
-/* 底部浮動隱藏控制列 */
-.cam-controls {
-    position: absolute;
-    bottom: -50px; /* 預設藏在下方 */
-    left: 0;
-    right: 0;
-    background: linear-gradient(transparent, rgba(12, 12, 14, 0.95) 40%);
-    padding: 15px;
-    display: flex;
-    gap: 8px;
-    z-index: 20;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 滑鼠滑入卡片時，控制按鈕優雅浮上 */
-.cam-box:hover .cam-controls {
-    bottom: 0;
-    opacity: 1;
-}
-
-/* 控制功能按鈕 */
-.btn-action {
-    background: rgba(39, 39, 42, 0.8);
-    color: #fff;
-    border: 1px solid var(--border-color);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 500;
     cursor: pointer;
-    backdrop-filter: blur(4px);
-}
-
-.btn-action:hover {
-    background: #fafafa;
-    color: #000;
-    border-color: #fafafa;
-}
-
-.btn-link {
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-}
-
-/* ==================================================
-   🔍 雙擊/點擊 全螢幕放大劇院模式
-   ================================================== */
-.cam-box.expanded {
-    position: fixed !important;
-    top: 30px !important;
-    left: 30px !important;
-    width: calc(100vw - 60px) !important;
-    height: calc(100vh - 120px) !important;
-    z-index: 9999;
-    border-color: var(--accent-blue);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-    animation: zoomIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ==================================================
-   📁 歷史錄影回放：側邊控制面板
-   ================================================== */
-#side-panel {
-    width: 320px;
-    background: var(--bg-card);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.3);
-}
-
-#side-panel h3 {
-    margin-top: 0;
-    margin-bottom: 18px;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    border-left: 3px solid var(--accent-green);
-    padding-left: 10px;
-}
-
-.selector-group {
-    margin-bottom: 16px;
-}
-
-.selector-group label {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-}
-
-#cam-select {
-    width: 100%;
-    padding: 10px;
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: #fff;
     font-size: 13px;
-    outline: none;
+    font-weight: 500;
+    text-decoration: none;
 }
-
-#cam-select:focus {
+.btn-nav.active, .btn-nav:hover {
+    background: var(--accent-green);
+    color: #000;
     border-color: var(--accent-green);
+    font-weight: 600;
 }
-
-/* 歷史影片清單滾動外盒 */
-#video-list-box {
-    flex: 1;
-    overflow-y: auto;
-    background: rgba(9, 9, 11, 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-top: 5px;
-}
-
-#recording-ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#recording-ul li {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 12px;
-    font-family: 'Courier New', monospace; /* 時間戳更整齊 */
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#recording-ul li:hover {
-    background: rgba(255, 255, 255, 0.03);
+.btn-wall {
+    background: #27272a;
     color: var(--text-main);
 }
 
-/* ==================================================
-   💤 訊號降級與客製化滾動條防護
-   ================================================== */
-.backup-grid {
+/* 中央單鏡頭大劇院版型 */
+#main-matrix-layout {
+    flex: 1;
+    display: flex;
     justify-content: center;
     align-items: center;
-    background: #060608;
-    border-style: dashed;
-    border-color: #222;
+    padding: 15px;
+    height: calc(100vh - 310px); /* 精確扣除頂部和底部高度 */
+}
+#theater-box {
+    width: 100%;
+    max-width: 1000px;
+    height: 100%;
+    background: #000;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+.theater-title {
+    background: rgba(24, 24, 27, 0.9);
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+}
+#theater-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #020203;
+    flex: 1;
+}
+.theater-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9) 50%);
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
 }
 
-.no-signal {
-    color: #3f3f46;
+/* 💡 需求 2 & 3：底部分頁控制抽屜面板 */
+#bottom-dock-panel {
+    height: 230px;
+    background: #121214;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+.dock-tabs {
+    background: #18181b;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+}
+.tab-link {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-right: 1px solid var(--border-color);
+}
+.tab-link.active {
+    background: #121214;
+    color: var(--text-main);
+    border-top: 2px solid var(--accent-green);
+    font-weight: 600;
+}
+.dock-tab-content {
+    display: none;
+    flex: 1;
+    padding: 12px;
+    overflow: hidden;
+}
+.dock-tab-content.active {
+    display: flex;
+}
+
+/* 底部錄影回放清單樣式 */
+.dock-recording-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+.dock-selector {
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+}
+#dock-selected-cam-label {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+#video-list-box {
+    flex: 1;
+    overflow-y: auto;
+    background: #09090b;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+#recording-ul { list-style: none; padding: 0; margin: 0; }
+#recording-ul li {
+    padding: 8px 16px;
+    border-bottom: 1px solid #121214;
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--text-muted);
+}
+
+/* 💡 需求 3：即時對話框（終端機日誌）樣式 */
+#log-terminal-box {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-terminal);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+.terminal-header {
     font-size: 11px;
     font-family: monospace;
-    letter-spacing: 1px;
+    color: var(--text-muted);
+    border-bottom: 1px solid #1a1a24;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
 }
+#log-terminal-body {
+    flex: 1;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.log-line { color: #d4d4d8; }
+.text-green { color: var(--accent-green); }
 
-.list-placeholder {
-    text-align: center;
-    padding: 40px 20px !important;
-    color: #52525b !important;
-    font-size: 12px !important;
-    border: none !important;
+/* 全部監視牆專用電視牆排版 */
+.all-cams-body { overflow-y: auto; height: auto; }
+#wall-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 20px;
+    padding: 20px;
 }
-
-/* 側邊欄專屬極簡科技風滑動條 */
-#video-list-box::-webkit-scrollbar {
-    width: 6px;
+.wall-box {
+    background: #000;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
 }
-#video-list-box::-webkit-scrollbar-track {
-    background: transparent;
-}
-#video-list-box::-webkit-scrollbar-thumb {
-    background: #27272a;
-    border-radius: 10px;
-}
-#video-list-box::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
-}
-
-/* 放大特效動畫 */
-@keyframes zoomIn {
-    from { transform: scale(0.98); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
+.wall-box img { width: 100%; height: auto; display: block; }

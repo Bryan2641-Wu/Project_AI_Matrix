@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 多鏡頭全監視電視牆</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="all-cams-body">
+
+    <div id="header-panel">
+        <div class="brand-title">📺 2026 安防矩陣 - 全鏡頭電視牆</div>
+        <a href="/" class="btn-action btn-link">🔙 返回單鏡頭控制台</a>
+    </div>
+
+    <div id="wall-grid">
+        {% for cam_id, source in camera_channels.items() %}
+            <div class="wall-box">
+                <div class="cam-title">🎬 頻道: {{ cam_id.upper() }}</div>
+                <img src="/user_access/streaming/{{ cam_id }}?mode=smooth" alt="鏡頭斷線">
+            </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
