@@ -86,9 +86,14 @@ class VideoCamera:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
                 )
             else:
-                # 🤖 🤖 🤖 核心修正：明確聲明 device="cpu" 🤖 🤖 🤖
-                # 完美避開 PyTorch 舊內核對 sm_120 的 Rand Warmup 封鎖，引導 ONNX Runtime 滿血加速！
-                results = self.model(frame, verbose=False, device="cpu")
+                # 🤖 🌟 終極修正：顯式指定 providers 為 CUDAExecutionProvider 
+                # 這樣外殼維持 device="cpu" 不觸發 PyTorch 崩潰，但底層推理會直接滿血送進 RTX 5070 Ti！
+                results = self.model(
+                    frame, 
+                    verbose=False, 
+                    device="cpu", 
+                    overrides={"providers": ["CUDAExecutionProvider", "CPUExecutionProvider"]}
+                )
                 frame = results[0].plot()
 
             # 💾 寫入背景防斷電錄影檔
