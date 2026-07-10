@@ -37,13 +37,17 @@ Project_AI_Matrix/
 
 2. 安裝依賴：
 
-Bash
+```bash
 pip install fastapi uvicorn opencv-python-headless psutil torch python-socketio Jinja2
+```
+
 3. 啟動系統：
 執行 run_server.bat 或在終端機輸入：
 
-Bash
+```bash
 python webcam_stream.py
+```
+
 4. 瀏覽系統：
 開啟瀏覽器訪問 http://localhost:5000。
 
