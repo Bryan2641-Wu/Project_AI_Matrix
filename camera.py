@@ -10,7 +10,8 @@ class VideoCamera:
     def __init__(self, cam_id, source, shared_model=None):
         self.cam_id = cam_id
         self.source = source
-        self.model = shared_model
+        # 即使傳入 shared_model 也直接忽略，完全去 YOLO 化
+        self.model = None 
         
         # 建立專屬該頻道的影像儲存目錄
         self.cam_record_dir = os.path.join(config.RECORD_DIR, self.cam_id)
@@ -24,9 +25,7 @@ class VideoCamera:
         # 初始化實體/網路攝影機
         self.cap = cv2.VideoCapture(self.source, cv2.CAP_DSHOW if isinstance(self.source, int) else cv2.CAP_FFMPEG)
         
-        # ==================================================
-        # 🌟 核心修正：動態校準硬體真實解析度與影格率 (FPS)
-        # ==================================================
+        # 動態校準硬體真實解析度與影格率 (FPS)
         if self.cap.isOpened():
             self.real_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.real_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -45,7 +44,7 @@ class VideoCamera:
         self.out = None
         self._init_next_video_writer()
         
-        # 發動獨立背景推理與錄影守護執行緒 (Thread)
+        # 發動獨立背景錄影與畫面拉取執行緒
         self.thread = threading.Thread(target=self._capture_worker, daemon=True)
         self.thread.start()
 
@@ -61,7 +60,7 @@ class VideoCamera:
         # 使用 XVID 編碼器封裝 .avi 檔
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         
-        # 🌟 核心修正：使用與硬體實體 100% 咬合的真寬高與真 FPS 進行宣告，消滅 Failed to write frame 錯誤
+        # 使用與硬體實體 100% 咬合的真寬高與真 FPS 進行宣告，消滅寫影格錯誤
         self.out = cv2.VideoWriter(
             self.current_record_file, 
             fourcc, 
@@ -71,7 +70,7 @@ class VideoCamera:
         self.last_split_time = time.time()
 
     def _capture_worker(self):
-        """獨立的守護執行緒：負責拉流、丟給 ONNX GPU 辨識，並即時寫入 AVI 檔案"""
+        """獨立的守護執行緒：負責拉流並即時寫入 AVI 檔案"""
         while self.is_running:
             start_time = time.time()
             ret, frame = self.cap.read()
@@ -85,19 +84,8 @@ class VideoCamera:
                     (int(self.real_width*0.1), int(self.real_height*0.5)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
                 )
-            else:
-                # 🤖 🌟 正確寫法：直接將 providers 參數傳遞給模型本身
-                # 這樣外殼走 CPU 完美防呆，而底層 ONNX 引擎會直接抽走 providers 參數，
-                # 讓你的 RTX 5070 Ti（Blackwell 架構）全面接管矩陣運算！
-                results = self.model(
-                    frame, 
-                    verbose=False, 
-                    device="cpu", 
-                    providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
-                )
-                frame = results[0].plot()
 
-            # 💾 寫入背景防斷電錄影檔
+            # 💾 直接寫入背景防斷電錄影檔（不經過任何 AI 延遲，速度極快）
             if self.out is not None:
                 self.out.write(frame)
                 
@@ -114,9 +102,8 @@ class VideoCamera:
             time.sleep(sleep_duration)
 
     def get_frame_generator(self, mode="smooth"):
-        """網頁前端串流分發器：配合 FastAPI StreamingResponse 輸出 multipart 格式"""
-        # 依據流暢度模式動態調配前端壓縮率，兼顧畫質與 RTX 5070 Ti 的頻寬優化
-        encode_quality = 85 if mode == "high" else 55
+        """網頁前端串流分發器：配合 FastAPI StreamingResponse 輸出"""
+        encode_quality = 85 if mode == "high" else 60
         
         while self.is_running:
             if self.Frame is None:
@@ -128,11 +115,9 @@ class VideoCamera:
             if not ret:
                 continue
                 
-            # 包裝成伺服器推播事件（Server-Sent Events）的 MJPEG 標準邊界格式
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
             
-            # 流暢度幀率上限微調器
             time.sleep(0.04 if mode == "smooth" else 0.06)
 
     def shutdown(self):
