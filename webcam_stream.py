@@ -51,7 +51,6 @@ cameras = {}
 async def lifespan(app: FastAPI):
     print("\n" + "="*50)
     print("[安防中心] 正在初始化多鏡頭核心矩陣 (純淨高畫質串流模式)...")
-    print("👉 已成功卸載 YOLO AI 推理核心，改用純 OpenCV 高速拉流引擎")
     
     # 建立多頻道相機串流實體
     for cam_id, source in config.CAMERA_CHANNELS.items():
@@ -86,11 +85,19 @@ def is_authenticated(request: Request) -> bool:
 def index_page(request: Request):
     if not is_authenticated(request):
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("index.html", {"request": request, "camera_channels": config.CAMERA_CHANNELS})
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={"camera_channels": config.CAMERA_CHANNELS}
+    )
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request, 
+        name="login.html", 
+        context={}
+    )
 
 @app.post("/login")
 async def handle_login(request: Request):
@@ -105,7 +112,11 @@ async def handle_login(request: Request):
         return response
     
     log_system_event("SECURITY", f"💥 登入失敗：收到來自未授權帳號 [{username}] 的登入請求！", level="WARNING")
-    return templates.TemplateResponse("login.html", {"request": request, "error": "帳號或密碼錯誤，拒絕存取。"})
+    return templates.TemplateResponse(
+        request=request, 
+        name="login.html", 
+        context={"error": "帳號或密碼錯誤，拒絕存取。"}
+    )
 
 @app.get("/logout")
 def handle_logout():
@@ -171,3 +182,18 @@ async def connect(sid, environ):
 @sio.event
 async def disconnect(sid):
     log_system_event("SECURITY", f"🚪 使用者 [admin] 已安全離線。")
+
+# ==================================================
+# 🚀 終極發動引擎：必須放在 webcam_stream.py 的最底部！
+# ==================================================
+if __name__ == "__main__":
+    import uvicorn
+    # 🌟 核心關鍵：將已經掛載好 Socket.IO 與 FastAPI 的主矩陣發動起來
+    # 使用 config 裡定義好的 HOST 與 PORT
+    print(f"📡 網頁伺服器正在主機 {config.HOST}:{config.PORT} 上啟動...")
+    uvicorn.run(
+        "webcam_stream:app",  # 或者是 "webcam_stream:sio_app"，取決於你外層用哪一個
+        host=config.HOST, 
+        port=config.PORT, 
+        reload=False
+    )
