@@ -1,0 +1,30 @@
+Project1/
+│
+├── .gitignore              # 🛡️ Git 版本控制排除清單（防私密影片與資料外洩）
+├── config.py               # ⚙️ 全域系統配置（路徑、畫質、硬體參數、容量上限）
+├── create_user.py          # 🔑 互動式管理員帳號建立工具（自動 Bcrypt 加密）
+├── camera.py               # 🤖 AI 相機引擎（自動硬體偵測、YOLOv8推理、AVI循環錄影、空間自動清理）
+├── webcam_stream.py        # 🖥️ Web 伺服器主程式（FastAPI 路由、Socket.IO、Bcrypt 登入牆、硬體監控廣播、FFmpeg 轉碼）
+├── run_server.bat          # ⚡ Windows 一鍵啟動批次檔
+│
+├── yolov8n.engine          # 🚀 頂級 TensorRT 模型權重（主要讀取速度極快）
+├── yolov8n.pt              # ⚡ PyTorch 備用模型權重（自動安全降級時讀取）
+│
+├── data/                   # 📂 資料儲存總目錄
+│   ├── monitor.db          # SQLite 資料庫檔案（儲存 users 表與系統事件日誌表）
+│   └── system.log          # 📝 旋轉式系統運作日誌文字檔（最大 5MB 自動覆蓋）
+│
+├── storage/                # 📂 監控多媒體儲存區
+│   ├── recordings/         # 24H 循環錄影硬體產生的原始 .avi 影片檔
+│   └── snapshots/          # AI 偵測到人全自動捕捉的關鍵影格 .jpg 照片檔
+│
+├── templates/              # 📂 網頁 HTML 範本
+│   ├── login.html          # 🔒 你原本設計的精美登入頁面
+│   └── index.html          # 📊 純淨版主儀表板（只看相機、指標、回放、日誌）
+│
+└── static/                 # 📂 網頁靜態資源
+    ├── css/
+    │   └── style.css       # 網頁樣式檔
+    ├── js/
+    │   └── stream.js       # 前端 WebSocket 監聽與播放器控制邏輯
+    └── cache/              # 🎬 點擊歷史影片回放時，FFmpeg 臨時高壓生成的 H.265 .mp4 快取區
