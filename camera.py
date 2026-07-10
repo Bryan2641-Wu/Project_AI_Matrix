@@ -13,7 +13,6 @@ import socketio
 import cv2
 
 import config
-from camera import VideoCamera
 
 # ==================================================
 # 🪵 系統安全與事件日誌配置
