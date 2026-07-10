@@ -128,6 +128,8 @@ async def lifespan(app: FastAPI):
         print("⚠️ 未發現 ONNX 模型，自動降級至標準 .pt 權重模式。")
         
     shared_yolo = YOLO(model_path)
+    # 🌟 新增：強迫 YOLO 外殼在大腦初始化時不准碰不相容的 PyTorch CUDA 內核
+    shared_yolo.to("cpu") 
     print(f"👉 AI 大腦模型載入成功: {model_path}")
     
     for cam_id, source in config.CAMERA_LIST.items():

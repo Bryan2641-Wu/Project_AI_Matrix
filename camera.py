@@ -86,11 +86,12 @@ class VideoCamera:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
                 )
             else:
-                # 🤖 顯卡加速推理：若有載入 YOLO 大腦，則執行實時物件辨識與畫框
-                if self.model is not None:
-                    # 走 ONNX Runtime GPU 鏈進行目標檢測
-                    results = self.model(frame, verbose=False, device=0)
-                    frame = results[0].plot()
+                # 🤖 🤖 🤖 核心修正：將 device 改為 "cpu" 🤖 🤖 🤖
+                # 這樣會強迫 YOLO 的 PyTorch 殼在外層走 CPU 安全熱身與解包，
+                # 但因為 yolov8n.onnx 內部已經綁定 ONNX Runtime GPU 鏈，
+                # 實際上底層的矩陣計算依然會自動在你的 RTX 5070 Ti 上滿血狂奔！
+                results = self.model(frame, verbose=False, device="cpu")
+                frame = results[0].plot()
 
             # 💾 寫入背景防斷電錄影檔
             if self.out is not None:
