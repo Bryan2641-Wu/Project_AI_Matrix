@@ -29,6 +29,7 @@ Project_AI_Matrix/
 │   └── snapshots/      # 手動快照截圖
 ├── templates/          # HTML 網頁模板
 └── static/             # CSS 樣式與 JS 腳本
+```
 
 ## 🛠️ 快速安裝與啟動
 1. 環境準備：
