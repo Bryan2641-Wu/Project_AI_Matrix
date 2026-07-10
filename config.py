@@ -1,47 +1,46 @@
+# config.py
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# ==========================================
-# 📂 標準化路徑配置
-# ==========================================
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-DB_PATH = os.path.join(DATA_DIR, "monitor.db")
-LOG_PATH = os.path.join(DATA_DIR, "system.log")
-
-STORAGE_DIR = os.path.join(BASE_DIR, "storage")
-SNAPSHOT_DIR = os.path.join(STORAGE_DIR, "snapshots")
-RECORD_DIR = os.path.join(STORAGE_DIR, "recordings")
-CACHE_DIR = os.path.join(BASE_DIR, "static", "cache")
-
-os.makedirs(SNAPSHOT_DIR, exist_ok=True)
-os.makedirs(RECORD_DIR, exist_ok=True)
-os.makedirs(CACHE_DIR, exist_ok=True)
-
-# ==========================================
-# 🌐 網路服務設定
-# ==========================================
+# ==================================================
+# 🌐 網路伺服器基礎設定
+# ==================================================
 HOST = "0.0.0.0"
 PORT = 5000
 
-# ==========================================
-# 📹 🌟 多攝影機安防矩陣清單配置 (OOP 升級)
-# ==========================================
-# 支援多個實體 USB 攝影機 (如 0, 1) 或遠端 IP Camera (RTSP 串流網址)
-CAMERA_LIST = {
-    "cam_0": 0,       # 研究室大門鏡頭 (Webcam 0)
-    "cam_1": 1,       # 研究室座位鏡頭 (Webcam 1，若沒有第二支鏡頭測試時可先填同一個 0)
-    "cam_2": 2        # 伺服器機櫃鏡頭 (Webcam 2)
+# ==================================================
+# 🔒 系統安全性安全憑證管理
+# ==================================================
+ADMIN_USER = "admin"
+ADMIN_PASSWORD = "your_secure_password"  # 👈 請在此修改你的登入密碼
+SESSION_TOKEN = "matrix_secure_session_token_2026"
+
+# ==================================================
+# 📁 實體目錄與路徑矩陣設定
+# ==================================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 資料庫與日誌目錄
+DATA_DIR = os.path.join(BASE_DIR, "data")
+LOG_DIR = os.path.join(BASE_DIR, "storage", "logs")       # 🌟 補上這個，解決 LOG_DIR 報錯！
+
+# 多媒體安防儲存目錄
+RECORD_DIR = os.path.join(BASE_DIR, "storage", "recordings")
+SNAPSHOT_DIR = os.path.join(BASE_DIR, "storage", "snapshots")
+CACHE_DIR = os.path.join(BASE_DIR, "static", "cache")
+
+# 確保所有基礎目錄在載入設定時就預先存在
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
+os.makedirs(RECORD_DIR, exist_ok=True)
+os.makedirs(SNAPSHOT_DIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+# ==================================================
+# 📹 攝影機硬體管道分發矩陣
+# ==================================================
+# 這裡定義了 webcam_stream.py 讀取的關鍵字 CAMERA_CHANNELS
+CAMERA_CHANNELS = {
+    "cam_0": 0,  # 實體 WebCam 索引 0
+    "cam_1": 1,  # 實體 WebCam 索引 1
+    "cam_2": 2   # 實體 WebCam 索引 2
 }
-
-HIGH_MODE_WIDTH = 1920
-HIGH_MODE_HEIGHT = 1080
-HIGH_MODE_QUALITY = 90
-
-SMOOTH_MODE_WIDTH = 1280
-SMOOTH_MODE_HEIGHT = 720
-SMOOTH_MODE_QUALITY = 60
-
-RECORD_SEGMENT_SECONDS = 60  
-MAX_RECORD_SIZE_BYTES = 100 * 1024 * 1024 * 1024
