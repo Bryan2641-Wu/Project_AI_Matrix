@@ -1,149 +1,139 @@
 import os
-import threading
 import time
 import datetime
+import threading
 import cv2
+import numpy as np
 import config
-from ultralytics import YOLO
 
 class VideoCamera:
-    def __init__(self, cam_id, cam_source, shared_yolo):
+    def __init__(self, cam_id, source, shared_model=None):
         self.cam_id = cam_id
-        self.camera = cv2.VideoCapture(cam_source, cv2.CAP_DSHOW) if isinstance(cam_source, int) else cv2.VideoCapture(cam_source)
+        self.source = source
+        self.model = shared_model
         
+        # 建立專屬該頻道的影像儲存目錄
+        self.cam_record_dir = os.path.join(config.RECORD_DIR, self.cam_id)
+        os.makedirs(self.cam_record_dir, exist_ok=True)
+        
+        # 執行緒與運行狀態控制指標
         self.Frame = None
-        self.status = False
-        self.is_stop = False
-        self.current_mode = None
-        self.jpeg_quality = 85
+        self.is_running = True
+        self.current_record_file = None
         
-        self.video_writer = None
-        self.current_record_file = ""
-        self.segment_start_time = 0
+        # 初始化實體/網路攝影機
+        self.cap = cv2.VideoCapture(self.source, cv2.CAP_DSHOW if isinstance(self.source, int) else cv2.CAP_FFMPEG)
         
-        self.model = shared_yolo
-        self.last_alert_time = 0      
-        self.alert_cooldown = 10       
-        
-        self.record_dir = os.path.join(config.RECORD_DIR, self.cam_id)
-        os.makedirs(self.record_dir, exist_ok=True)
-        
-        threading.Thread(target=self._query_and_record, daemon=True).start()
-
-    def _query_and_record(self):
-        while not self.is_stop:
-            if self.camera.isOpened():
-                self.status, frame = self.camera.read()
-                if self.status:
-                    annotated_frame = self._process_ai_detection(frame)
-                    self.Frame = annotated_frame
-                    self._handle_recording(annotated_frame)
-            time.sleep(0.033) 
-        self._stop_video_writer()
-
-    def _process_ai_detection(self, frame):
-        try:
-            img = frame.copy()
-            # 🌟 透過 ONNX 引擎進行超高速 GPU 推理
-            results = self.model(img, verbose=False)
-            person_detected = False
-            best_conf = 0.0  
+        # ==================================================
+        # 🌟 核心修正：動態校準硬體真實解析度與影格率 (FPS)
+        # ==================================================
+        if self.cap.isOpened():
+            self.real_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.real_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.real_fps = self.cap.get(cv2.CAP_PROP_FPS)
             
-            for result in results:
-                for box in result.boxes:
-                    if int(box.cls[0]) == 0: # person
-                        person_detected = True
-                        x1, y1, x2, y2 = map(int, box.xyxy[0])
-                        conf = float(box.conf[0])
-                        if conf > best_conf: best_conf = conf  
-                        
-                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(img, f"[{self.cam_id.upper()}] Person: {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-            if person_detected:
-                current_time = time.time()
-                if current_time - self.last_alert_time > self.alert_cooldown:
-                    self.last_alert_time = current_time
-                    time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"ai_{self.cam_id}_{time_str}.jpg"
-                    filepath = os.path.join(config.SNAPSHOT_DIR, filename)
-                    cv2.imwrite(filepath, img)
-                    
-                    from webcam_stream import log_system_event
-                    # 🌟 這裡日誌訊息故意帶有「⚠️」與「警報」，方便前端捕捉變色
-                    log_system_event("FACE", f"⚠️ [AI 警報] 攝影機 [{self.cam_id.upper()}] 偵測到人類闖入！關鍵影格已存檔 ({filename}，信心度: {best_conf:.2f})", filepath=filepath)
-            return img
-        except Exception:
-            return frame
-
-    def _cleanup_old_recordings(self):
-        try:
-            while True:
-                files = [os.path.join(self.record_dir, f) for f in os.listdir(self.record_dir) if f.endswith('.avi')]
-                total_size = sum(os.path.getsize(f) for f in files if os.path.exists(f))
-                if total_size <= (config.MAX_RECORD_SIZE_BYTES // len(config.CAMERA_LIST)): break
-                files.sort(key=lambda x: os.path.getmtime(x))
-                if files:
-                    oldest_file = files[0]
-                    if oldest_file == self.current_record_file: break
-                    from webcam_stream import log_system_event
-                    log_system_event("STORAGE", f"⚠️ [容量維護] 攝影機 [{self.cam_id.upper()}] 自動覆蓋最舊影片: {os.path.basename(oldest_file)}")
-                    os.remove(oldest_file)
-                else: break
-        except Exception: pass
-
-    def _handle_recording(self, frame):
-        now = time.time()
-        if self.video_writer is None or (now - self.segment_start_time) >= config.RECORD_SEGMENT_SECONDS:
-            self._stop_video_writer()
-            self._cleanup_old_recordings()
-            time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"rec_{self.cam_id}_{time_str}.avi"
-            filepath = os.path.join(self.record_dir, filename)
-            self.current_record_file = filepath
-            h, w, _ = frame.shape
-            self.video_writer = cv2.VideoWriter(filepath, cv2.VideoWriter_fourcc(*'XVID'), 30.0, (w, h))
-            self.segment_start_time = now
-            from webcam_stream import log_system_event
-            log_system_event("SYSTEM", f"🎬 [{self.cam_id.upper()}] 開始錄製防斷電監控檔案: {filename}")
-        if self.video_writer is not None:
-            self.video_writer.write(frame)
-
-    def _stop_video_writer(self):
-        if self.video_writer is not None:
-            self.video_writer.release()
-            self.video_writer = None
-
-    def set_mode(self, mode):
-        if self.current_mode == mode: return self.jpeg_quality
-        if mode == 'high':
-            self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, config.HIGH_MODE_WIDTH)
-            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, config.HIGH_MODE_HEIGHT)
-            self.jpeg_quality = config.HIGH_MODE_QUALITY
+            # 防呆機制：若部分 WebCam 回傳的 FPS 為 0 或異常，自動給予工業標準 20.0 預設值
+            if self.real_fps <= 0 or self.real_fps > 60:
+                self.real_fps = 20.0
         else:
-            self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, config.SMOOTH_MODE_WIDTH)
-            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, config.SMOOTH_MODE_HEIGHT)
-            self.jpeg_quality = config.SMOOTH_MODE_QUALITY
-        self.current_mode = mode
-        return self.jpeg_quality
+            # 線路未掛載時的降級黑畫面尺寸預設值
+            self.real_width = 640
+            self.real_height = 480
+            self.real_fps = 20.0
 
-    def get_frame_generator(self, mode):
-        self.set_mode(mode)
-        target_fps = 24 if mode == 'high' else 30
-        frame_duration = 1.0 / target_fps
-        while True:
+        # 初始化錄影寫入器組件 (VideoWriter)
+        self.out = None
+        self._init_next_video_writer()
+        
+        # 發動獨立背景推理與錄影守護執行緒 (Thread)
+        self.thread = threading.Thread(target=self._capture_worker, daemon=True)
+        self.thread.start()
+
+    def _init_next_video_writer(self):
+        """建立防斷電、具備動態尺寸校準的錄影檔案寫入器"""
+        if self.out is not None:
+            self.out.release()
+            
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"rec_{self.cam_id}_{timestamp}.avi"
+        self.current_record_file = os.path.join(self.cam_record_dir, filename)
+        
+        # 使用 XVID 編碼器封裝 .avi 檔
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        
+        # 🌟 核心修正：使用與硬體實體 100% 咬合的真寬高與真 FPS 進行宣告，消滅 Failed to write frame 錯誤
+        self.out = cv2.VideoWriter(
+            self.current_record_file, 
+            fourcc, 
+            self.real_fps, 
+            (self.real_width, self.real_height)
+        )
+        self.last_split_time = time.time()
+
+    def _capture_worker(self):
+        """獨立的守護執行緒：負責拉流、丟給 ONNX GPU 辨識，並即時寫入 AVI 檔案"""
+        while self.is_running:
             start_time = time.time()
+            ret, frame = self.cap.read()
+            
+            if not ret:
+                # 🛡️ 訊號中斷防護：建立一個與規格尺寸相同的純黑防護影格，維持串流不中斷
+                frame = np.zeros((self.real_height, self.real_width, 3), dtype=np.uint8)
+                cv2.putText(
+                    frame, 
+                    f"CHANNEL [{self.cam_id.upper()}] NO SIGNAL", 
+                    (int(self.real_width*0.1), int(self.real_height*0.5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+                )
+            else:
+                # 🤖 顯卡加速推理：若有載入 YOLO 大腦，則執行實時物件辨識與畫框
+                if self.model is not None:
+                    # 走 ONNX Runtime GPU 鏈進行目標檢測
+                    results = self.model(frame, verbose=False, device=0)
+                    frame = results[0].plot()
+
+            # 💾 寫入背景防斷電錄影檔
+            if self.out is not None:
+                self.out.write(frame)
+                
+            # 將當前最新的一影格拋給前端 Socket.IO / Streaming 進行廣播
+            self.Frame = frame
+            
+            # ⏰ 每隔一小時自動切片封裝一次影片，防止檔案過大損壞
+            if time.time() - self.last_split_time > 3600:
+                self._init_next_video_writer()
+
+            # 依據攝影機的真實影格率進行精確的延時調配，防止執行緒暴走榨乾 CPU
+            elapsed = time.time() - start_time
+            sleep_duration = max(0.001, (1.0 / self.real_fps) - elapsed)
+            time.sleep(sleep_duration)
+
+    def get_frame_generator(self, mode="smooth"):
+        """網頁前端串流分發器：配合 FastAPI StreamingResponse 輸出 multipart 格式"""
+        # 依據流暢度模式動態調配前端壓縮率，兼顧畫質與 RTX 5070 Ti 的頻寬優化
+        encode_quality = 85 if mode == "high" else 55
+        
+        while self.is_running:
             if self.Frame is None:
-                time.sleep(0.01)
+                time.sleep(0.05)
                 continue
-            ret, buffer = cv2.imencode('.jpg', self.Frame.copy(), [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality])
-            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            sleep_time = frame_duration - (time.time() - start_time)
-            if sleep_time > 0: time.sleep(sleep_time)
+                
+            # 將 OpenCV 的 BGR 矩陣編碼為輕量化 .jpg
+            ret, jpeg = cv2.imencode('.jpg', self.Frame, [int(cv2.IMWRITE_JPEG_QUALITY), encode_quality])
+            if not ret:
+                continue
+                
+            # 包裝成伺服器推播事件（Server-Sent Events）的 MJPEG 標準邊界格式
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+            
+            # 流暢度幀率上限微調器
+            time.sleep(0.04 if mode == "smooth" else 0.06)
 
     def shutdown(self):
-        self.is_stop = True
-        self._stop_video_writer()
-        if self.camera.isOpened(): self.camera.release()
+        """安全釋放硬體與寫入器資源"""
+        self.is_running = False
+        if self.cap.isOpened():
+            self.cap.release()
+        if self.out is not None:
+            self.out.release()
