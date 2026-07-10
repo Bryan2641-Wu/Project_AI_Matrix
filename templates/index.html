@@ -102,7 +102,6 @@
         const socket = io();
         let currentActiveCam = "{{ first_cam }}";
 
-        // 🌟 核心修復 1：消滅 camId.upper() 錯誤，更正為 JavaScript 的 .toUpperCase()
         function switchMainCamera(camId) {
             currentActiveCam = camId;
             const timestamp = Date.now();
@@ -110,6 +109,7 @@
             document.querySelectorAll('.btn-nav').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${camId}`).classList.add('active');
             
+            // 🌟 修正：改用符合 JS 規範的 .toUpperCase()
             document.getElementById('current-cam-title').innerText = `🎬 正在監控：${camId.toUpperCase()}`;
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth&t=${timestamp}`;
             
@@ -122,7 +122,6 @@
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}&t=${timestamp}`;
         }
 
-        // 🌟 核心修復 3：消滅紅字蚯蚓線，將 CSS 變數以合規字串傳遞
         function toggleTheaterExpand() {
             const theaterBox = document.getElementById('theater-box');
             if (theaterBox) {
@@ -132,7 +131,7 @@
                 if (theaterBox.classList.contains('expanded')) {
                     btn.innerText = "❌ 退出全螢幕";
                     btn.style.background = "#271414";
-                    btn.style.borderColor = "#f87171"; 
+                    btn.style.borderColor = "#f87171"; // 🌟 修正：傳遞安全顏色字串
                 } else {
                     btn.innerText = "🔎 全螢幕劇院";
                     btn.style.background = "rgba(39, 39, 42, 0.8)";
@@ -172,7 +171,6 @@
                 .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
         }
 
-        // 通訊對話框日誌生成器
         function appendLog(timeStr, subsystem, message, colorClass = '') {
             const body = document.getElementById('log-terminal-body');
             if(!body) return;
@@ -183,12 +181,10 @@
             body.scrollTop = body.scrollHeight; 
         }
 
-        // 🌟 核心修復 2：聯動接住後端廣播的實時安全日誌事件！
         socket.on('log_broadcast', (data) => {
             appendLog(data.time, data.subsystem, data.message, data.color);
         });
 
-        // WebSocket 接收硬體數據
         socket.on('hw_update', (data) => {
             document.getElementById('cpu-text').innerText = `${data.cpu}%`;
             document.getElementById('cpu-progress').style.width = `${data.cpu}%`;

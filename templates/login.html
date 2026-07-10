@@ -13,12 +13,18 @@
             <form action="/login" method="POST">
                 <div class="form-group">
                     <label for="username">管理員帳號</label>
-                    <input type="text" id="username" name="username" class="form-control" placeholder="請輸入帳號" required autocomplete="off">
+                    <input type="text" id="username" name="username" class="form-control" placeholder="請輸入帳號" value="{{ remembered_username }}" required autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="password">安全性密碼</label>
                     <input type="password" id="password" name="password" class="form-control" placeholder="請輸入密碼" required>
                 </div>
+                
+                <div class="remember-group">
+                    <input type="checkbox" id="remember" name="remember" {% if remembered_username %}checked{% endif %}>
+                    <label for="remember">記住管理員帳號</label>
+                </div>
+
                 <button type="submit" class="btn-submit">驗證身分並登入</button>
             </form>
         </div>

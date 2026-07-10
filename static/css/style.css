@@ -1,27 +1,145 @@
+/* static/css/style.css */
 :root {
-    --bg-main: #09090b;
-    --bg-card: rgba(24, 24, 27, 0.8);
-    --border-color: #27272a;
-    --text-main: #fafafa;
-    --text-muted: #71717a;
-    --accent-green: #10b981;
-    --accent-red: #f87171;
-    --bg-terminal: #040406;
+    --bg-main: #0c0c0e;          
+    --bg-card: rgba(20, 20, 25, 0.75); 
+    --bg-input: #121216;         
+    --border-color: #27272a;     
+    --border-hover: #10b981;     
+    --text-main: #fafafa;        
+    --text-muted: #71717a;       
+    --accent-green: #10b981;     
+    --accent-red: #ef4444;       
+    --accent-blue: #3b82f6;      
+    --accent-cyan: #06b6d4;      
+    --shadow-neon: rgba(16, 185, 129, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
 }
 
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
+    overflow: hidden; 
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
-/* 頂部導覽列 */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    background: radial-gradient(circle at center, #11201b 0%, #0c0c0e 70%); 
+}
+
+.login-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px); 
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    padding: 40px;
+    border-radius: 12px;
+    width: 360px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.form-group { margin-bottom: 18px; }
+.form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-main);
+    font-size: 14px;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-green);
+    box-shadow: 0 0 10px var(--shadow-neon);
+}
+
+.remember-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    margin-top: 5px;
+    cursor: pointer;
+}
+.remember-group input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--accent-green); 
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+.remember-group label {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+.remember-group:hover label { color: var(--text-main); }
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--text-main);
+    color: var(--bg-main);
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+.btn-submit:hover {
+    background: var(--accent-green);
+    color: white;
+    box-shadow: 0 0 15px var(--shadow-neon);
+}
+
+.error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--accent-red);
+    color: #f87171;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 #header-panel {
     background: var(--bg-card);
     backdrop-filter: blur(8px);
@@ -33,11 +151,8 @@ body {
     height: 60px;
 }
 
-/* 💡 動態相機按鈕群 */
-#cam-selector-bar {
-    display: flex;
-    gap: 10px;
-}
+.brand-title { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+#cam-selector-bar { display: flex; gap: 10px; }
 .btn-nav {
     background: #18181b;
     color: var(--text-muted);
@@ -48,6 +163,8 @@ body {
     font-size: 13px;
     font-weight: 500;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
 .btn-nav.active, .btn-nav:hover {
     background: var(--accent-green);
@@ -55,20 +172,40 @@ body {
     border-color: var(--accent-green);
     font-weight: 600;
 }
-.btn-wall {
-    background: #27272a;
-    color: var(--text-main);
+.btn-wall { background: #27272a; color: var(--text-main); }
+.btn-wall:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+
+#hw-metrics {
+    font-size: 11px;
+    color: var(--accent-green);
+    background: rgba(16, 185, 129, 0.08);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-family: monospace;
 }
 
-/* 中央單鏡頭大劇院版型 */
+.btn-logout {
+    color: var(--accent-red);
+    text-decoration: none;
+    font-size: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.05);
+    font-weight: 500;
+}
+.btn-logout:hover { background: var(--accent-red); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+
 #main-matrix-layout {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 15px;
-    height: calc(100vh - 310px); /* 精確扣除頂部和底部高度 */
+    height: calc(100vh - 290px); 
 }
+
 #theater-box {
     width: 100%;
     max-width: 1000px;
@@ -80,236 +217,54 @@ body {
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
 }
+
 .theater-title {
     background: rgba(24, 24, 27, 0.9);
     padding: 10px 16px;
     font-size: 14px;
     font-weight: 600;
     border-bottom: 1px solid var(--border-color);
+    z-index: 5;
 }
+
 #theater-box img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: contain; 
     background: #020203;
     flex: 1;
 }
+
 .theater-controls {
     position: absolute;
-    bottom: 0;
+    bottom: -60px; 
     left: 0;
     right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9) 50%);
+    background: linear-gradient(transparent, rgba(12, 12, 14, 0.95) 50%);
     padding: 15px;
     display: flex;
     gap: 10px;
     justify-content: center;
+    z-index: 10;
+    opacity: 0;
 }
+#theater-box:hover .theater-controls { bottom: 0; opacity: 1; }
 
-/* 💡 需求 2 & 3：底部分頁控制抽屜面板 */
-#bottom-dock-panel {
-    height: 230px;
-    background: #121214;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-.dock-tabs {
-    background: #18181b;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-}
-.tab-link {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 13px;
+.btn-action {
+    background: rgba(39, 39, 42, 0.8);
+    color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 500;
-    border-right: 1px solid var(--border-color);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
 }
-.tab-link.active {
-    background: #121214;
-    color: var(--text-main);
-    border-top: 2px solid var(--accent-green);
-    font-weight: 600;
-}
-.dock-tab-content {
-    display: none;
-    flex: 1;
-    padding: 12px;
-    overflow: hidden;
-}
-.dock-tab-content.active {
-    display: flex;
-}
+.btn-action:hover { background: #fafafa; color: #000; border-color: #fafafa; }
 
-/* 底部錄影回放清單樣式 */
-.dock-recording-layout {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-}
-.dock-selector {
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: var(--text-muted);
-}
-#dock-selected-cam-label {
-    color: var(--accent-green);
-    font-weight: 600;
-}
-#video-list-box {
-    flex: 1;
-    overflow-y: auto;
-    background: #09090b;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-}
-#recording-ul { list-style: none; padding: 0; margin: 0; }
-#recording-ul li {
-    padding: 8px 16px;
-    border-bottom: 1px solid #121214;
-    font-size: 12px;
-    font-family: monospace;
-    color: var(--text-muted);
-}
-
-/* 💡 需求 3：即時對話框（終端機日誌）樣式 */
-#log-terminal-box {
-    width: 100%;
-    height: 100%;
-    background: var(--bg-terminal);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-}
-.terminal-header {
-    font-size: 11px;
-    font-family: monospace;
-    color: var(--text-muted);
-    border-bottom: 1px solid #1a1a24;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
-}
-#log-terminal-body {
-    flex: 1;
-    overflow-y: auto;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1.5;
-}
-.log-line { color: #d4d4d8; }
-.text-green { color: var(--accent-green); }
-
-/* 全部監視牆專用電視牆排版 */
-.all-cams-body { overflow-y: auto; height: auto; }
-#wall-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-.wall-box {
-    background: #000;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-}
-.wall-box img { width: 100%; height: auto; display: block; }
-
-/* ==================================================
-   📊 升級版：五星級硬體監測控制台面調色盤與佈局
-   ================================================== */
-.monitor-dashboard-layout {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    height: 100%;
-    align-items: center;
-    padding: 5px;
-}
-
-.monitor-card {
-    flex: 1;
-    background: #09090b;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 100px;
-}
-
-/* 靜態數據專用卡片（網速、GPU） */
-.static-data-card {
-    justify-content: flex-start;
-}
-
-.monitor-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.metrics-val {
-    font-family: monospace;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-/* 網速文字列排版 */
-.net-speed-display {
-    font-family: monospace;
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 5px;
-}
-.text-blue { color: #3b82f6; font-weight: 600; }
-
-/* GPU 看板區塊 */
-.gpu-display-box {
-    margin-top: 2px;
-}
-.gpu-name-line {
-    font-size: 12px;
-    font-weight: 600;
-    color: #e4e4e7;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.gpu-status-badge {
-    display: inline-block;
-    margin-top: 6px;
-    font-size: 10px;
-    font-family: monospace;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-/* 專屬新色：青色進度條 (Cyan) 用於硬碟 */
-.fill-cyan { background: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
-
-/* ==================================================
-   🔎 中央大劇院全螢幕放大超強固樣式覆蓋
-   ================================================== */
 #theater-box.expanded {
     position: fixed !important;
     top: 0 !important;
@@ -317,14 +272,84 @@ body {
     width: 100vw !important;
     height: 100vh !important;
     max-width: none !important;
-    z-index: 99999 !important; /* 確保壓在最上層 */
+    z-index: 99999 !important; 
     border-radius: 0 !important;
     border: none !important;
     animation: zoomIn 0.2s ease-out;
 }
+#theater-box.expanded .theater-title { background: rgba(9, 9, 11, 0.95); padding: 15px 20px; font-size: 16px; }
 
-#theater-box.expanded .theater-title {
-    background: rgba(9, 9, 11, 0.95);
-    padding: 15px 20px;
-    font-size: 16px;
+#bottom-dock-panel {
+    height: 230px;
+    background: #111113;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+}
+
+.dock-tabs { background: #161619; border-bottom: 1px solid var(--border-color); display: flex; }
+.tab-link {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-right: 1px solid var(--border-color);
+}
+.tab-link.active {
+    background: #111113;
+    color: var(--text-main);
+    border-top: 2px solid var(--accent-green);
+    font-weight: 600;
+}
+
+.dock-tab-content { display: none; flex: 1; padding: 12px; overflow: hidden; }
+.dock-tab-content.active { display: flex; }
+
+.dock-recording-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
+.dock-selector { font-size: 12px; margin-bottom: 6px; color: var(--text-muted); }
+#dock-selected-cam-label { color: var(--accent-green); font-weight: 600; }
+#video-list-box { flex: 1; overflow-y: auto; background: #09090b; border: 1px solid var(--border-color); border-radius: 6px; }
+#recording-ul { list-style: none; padding: 0; margin: 0; }
+#recording-ul li { padding: 10px 16px; border-bottom: 1px solid #111113; font-size: 12px; font-family: monospace; color: var(--text-muted); }
+#recording-ul li:hover { background: rgba(255, 255, 255, 0.02); color: var(--text-main); }
+
+#log-terminal-box { width: 100%; height: 100%; background: #040406; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 10px; }
+.terminal-header { font-size: 11px; font-family: monospace; color: var(--text-muted); border-bottom: 1px solid #16161f; padding-bottom: 4px; margin-bottom: 6px; }
+#log-terminal-body { flex: 1; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; }
+.log-line { color: #d4d4d8; }
+.text-green { color: var(--accent-green); }
+.text-blue { color: var(--accent-blue); }
+.text-red { color: var(--accent-red); }
+
+.monitor-dashboard-layout { display: flex; gap: 12px; width: 100%; height: 100%; align-items: center; padding: 5px; }
+.monitor-card { flex: 1; background: #09090b; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: center; min-height: 102px; }
+.static-data-card { justify-content: flex-start; }
+.monitor-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.metrics-val { font-family: monospace; font-size: 13px; font-weight: 600; }
+
+.progress-bar-container { width: 100%; height: 8px; background: #1c1c21; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; border-radius: 4px; transition: width 0.4s ease-out; }
+.fill-green { background: var(--accent-green); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+.fill-blue { background: var(--accent-blue); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+.fill-cyan { background: var(--accent-cyan); box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+.fill-red { background: var(--accent-red); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+
+.net-speed-display { font-family: monospace; font-size: 12px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+.gpu-display-box { margin-top: 2px; }
+.gpu-name-line { font-size: 12px; font-weight: 600; color: #e4e4e7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gpu-status-badge { display: inline-block; margin-top: 6px; font-size: 10px; font-family: monospace; background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+.all-cams-body { overflow-y: auto; height: auto; }
+#wall-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; padding: 20px; }
+.wall-box { background: #000; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+.wall-box img { width: 100%; height: auto; display: block; background: #020203; }
+.list-placeholder { text-align: center; padding: 40px 20px !important; color: #52525b !important; font-size: 12px !important; border: none !important; }
+
+@keyframes zoomIn {
+    from { transform: scale(0.98); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }

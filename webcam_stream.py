@@ -32,29 +32,28 @@ logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
+# 執行緒安全的事件循環暫存器
+main_loop = None
+
 def log_system_event(subsystem: str, message: str, level: str = "INFO"):
-    """全域系統日誌記錄器：同時寫入硬碟並透過 WebSocket 廣播至網頁對話框"""
+    """全域安全日誌記錄器：確保跨執行緒 100% 安全廣播至前端對話框"""
     extra = {"subsystem": subsystem}
     if level == "WARNING": logger.warning(message, extra=extra)
     elif level == "ERROR": logger.error(message, extra=extra)
     else: logger.info(message, extra=extra)
     
-    # 🌟 核心修復 2：將後端日誌異步安全廣播至前端網頁對話框，讓通訊欄活過來！
-    try:
+    global main_loop
+    if main_loop and main_loop.is_running():
         color = "text-red" if level in ["WARNING", "ERROR"] else ("text-green" if subsystem == "SECURITY" else "text-blue")
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('log_broadcast', {
-                    'subsystem': subsystem, 
-                    'message': message, 
-                    'color': color,
-                    'time': datetime.datetime.now().strftime('%H:%M:%S')
-                }),
-                loop
-            )
-    except Exception:
-        pass
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('log_broadcast', {
+                'subsystem': subsystem, 
+                'message': message, 
+                'color': color,
+                'time': datetime.datetime.now().strftime('%H:%M:%S')
+            }),
+            main_loop
+        )
 
 # ==================================================
 # 🔌 初始化 Socket.IO 異步雙向監控矩陣
@@ -105,9 +104,11 @@ async def background_hw_monitor():
 # ==================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global main_loop
+    main_loop = asyncio.get_running_loop() # 🌟 核心修復：精確鎖定 Uvicorn 主事件循環
+    
     print("\n" + "="*50)
     print("[安防中心] 正在初始化多鏡頭核心矩陣 (純淨高畫質串流模式)...")
-    
     for cam_id, source in config.CAMERA_CHANNELS.items():
         cameras[cam_id] = VideoCamera(cam_id=cam_id, source=source)
         print(f"✅ 攝影機管道 [{cam_id.upper()}] 初始化成功，獨立錄影執行緒已開工。")
@@ -158,13 +159,17 @@ def all_cameras_wall(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse(request=request, name="login.html", context={})
+    remembered_user = request.cookies.get("remembered_username", "")
+    return templates.TemplateResponse(
+        request=request, name="login.html", context={"remembered_username": remembered_user}
+    )
 
 @app.post("/login")
 async def handle_login(request: Request):
     form_data = await request.form()
     username = form_data.get("username")
     password = form_data.get("password")
+    remember = form_data.get("remember") 
     
     try:
         conn = sqlite3.connect(config.DB_PATH)
@@ -176,13 +181,22 @@ async def handle_login(request: Request):
         if row and verify_password(password, row[0]):
             response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
             response.set_cookie(key="session_token", value=config.SESSION_TOKEN, httponly=True)
+            
+            if remember == "on":
+                response.set_cookie(key="remembered_username", value=username, max_age=2592000)
+            else:
+                response.delete_cookie(key="remembered_username")
+                
             log_system_event("SECURITY", f"🔐 管理員 [{username}] 成功通過資料庫驗證登入系統。")
             return response
     except Exception as e:
         log_system_event("SYSTEM", f"資料庫讀取異常: {e}", level="ERROR")
     
     log_system_event("SECURITY", f"💥 登入失敗：帳號或密碼不匹配 [{username}] ！", level="WARNING")
-    return templates.TemplateResponse(request=request, name="login.html", context={"error": "帳號或密碼錯誤，拒絕存取。"})
+    remembered_user = request.cookies.get("remembered_username", "")
+    return templates.TemplateResponse(
+        request=request, name="login.html", context={"error": "帳號或密碼錯誤，拒絕存取。", "remembered_username": remembered_user}
+    )
 
 @app.get("/logout")
 def handle_logout():
@@ -191,9 +205,6 @@ def handle_logout():
     log_system_event("SECURITY", "🚪 使用者 [admin] 已安全離線。")
     return response
 
-# ==================================================
-# 📹 即時串流與安防錄影控制 API
-# ==================================================
 @app.get("/user_access/streaming/{cam_id}")
 def video_feed(cam_id: str, request: Request, mode: str = "smooth"):
     if not is_authenticated(request): raise HTTPException(status_code=401)
@@ -203,7 +214,7 @@ def video_feed(cam_id: str, request: Request, mode: str = "smooth"):
 @app.get("/capture_snapshot/{cam_id}")
 def capture_snapshot(cam_id: str, request: Request):
     if not is_authenticated(request): raise HTTPException(status_code=401)
-    if cam_id not in cameras: return RedirectResponse(url="/")
+    if cam_id not in cameras: return RedirectResponse(url="/") # 🌟 核心修復 1：消滅轉義斜線
     current_frame = cameras[cam_id].Frame
     if current_frame is not None:
         filename = f"snapshot_{cam_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
@@ -218,10 +229,6 @@ def get_recordings_list(cam_id: str, request: Request):
     if not os.path.exists(target_dir): return {"recordings": []}
     files = sorted([f for f in os.listdir(target_dir) if f.endswith(".avi")], key=lambda x: os.path.getmtime(os.path.join(target_dir, x)), reverse=True)
     return {"recordings": files}
-
-@sio.event
-async def connect(sid, environ): 
-    pass # 邏輯移至網頁端 onLoad 或後端登入審計中
 
 if __name__ == "__main__":
     import uvicorn
