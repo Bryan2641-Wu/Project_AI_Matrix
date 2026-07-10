@@ -224,15 +224,15 @@ body {
 .wall-box img { width: 100%; height: auto; display: block; }
 
 /* ==================================================
-   📊 補回來的電腦監測儀表板專用科技風樣式
+   📊 升級版：五星級硬體監測控制台面調色盤與佈局
    ================================================== */
 .monitor-dashboard-layout {
     display: flex;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
     height: 100%;
     align-items: center;
-    padding: 10px;
+    padding: 5px;
 }
 
 .monitor-card {
@@ -240,45 +240,69 @@ body {
     background: #09090b;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 20px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 100px;
+}
+
+/* 靜態數據專用卡片（網速、GPU） */
+.static-data-card {
+    justify-content: flex-start;
 }
 
 .monitor-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-muted);
-    margin-bottom: 10px;
-    font-weight: 500;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .metrics-val {
     font-family: monospace;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
 }
 
-/* 進度條外盒 */
-.progress-bar-container {
-    width: 100%;
-    height: 8px;
-    background: #1c1c21;
-    border-radius: 4px;
+/* 網速文字列排版 */
+.net-speed-display {
+    font-family: monospace;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 5px;
+}
+.text-blue { color: #3b82f6; font-weight: 600; }
+
+/* GPU 看板區塊 */
+.gpu-display-box {
+    margin-top: 2px;
+}
+.gpu-name-line {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e4e4e7;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
 }
-
-/* 進度條彩色動畫主體 */
-.progress-fill {
-    height: 100%;
-    width: 0%;
+.gpu-status-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 10px;
+    font-family: monospace;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 2px 8px;
     border-radius: 4px;
-    transition: width 0.4s ease-out; /* 動態平滑推進 */
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-/* 填色調色盤 */
-.fill-green { background: var(--accent-green); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
-.fill-blue { background: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
-.fill-red { background: var(--accent-red); box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); }
+/* 專屬新色：青色進度條 (Cyan) 用於硬碟 */
+.fill-cyan { background: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }

@@ -45,7 +45,8 @@
         <div class="dock-tabs">
             <button class="tab-link active" onclick="switchDockTab('tab-recordings')">📁 歷史錄影回放</button>
             <button class="tab-link" onclick="switchDockTab('tab-logs')">💬 即時安防事件日誌</button>
-            <button class="tab-link" onclick="switchDockTab('tab-monitor')">📊 系統硬體監測</button> </div>
+            <button class="tab-link" onclick="switchDockTab('tab-monitor')">📊 全系統硬體監測儀表板</button> 
+        </div>
 
         <div id="tab-recordings" class="dock-tab-content active">
             <div class="dock-recording-layout">
@@ -67,9 +68,10 @@
 
         <div id="tab-monitor" class="dock-tab-content">
             <div class="monitor-dashboard-layout">
+                
                 <div class="monitor-card">
                     <div class="monitor-meta">
-                        <span>中央處理器 CPU 使用率</span>
+                        <span>中央處理器 CPU</span>
                         <span id="cpu-text" class="metrics-val">0%</span>
                     </div>
                     <div class="progress-bar-container">
@@ -79,13 +81,40 @@
                 
                 <div class="monitor-card">
                     <div class="monitor-meta">
-                        <span>隨機存取記憶體 RAM 使用率</span>
+                        <span>隨機記憶體 RAM</span>
                         <span id="ram-text" class="metrics-val">0%</span>
                     </div>
                     <div class="progress-bar-container">
                         <div id="ram-progress" class="progress-fill fill-blue" style="width: 0%"></div>
                     </div>
                 </div>
+
+                <div class="monitor-card">
+                    <div class="monitor-meta">
+                        <span>錄影儲存碟 DISK</span>
+                        <span id="disk-text" class="metrics-val">0 GB 剩餘</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="disk-progress" class="progress-fill fill-cyan" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="monitor-card static-data-card">
+                    <div class="monitor-meta"><span>串流網路頻寬 NET</span></div>
+                    <div class="net-speed-display">
+                        <div class="net-line">🔼 上傳: <span id="net-up-text" class="text-blue">0.00 Mbps</span></div>
+                        <div class="net-line">🔽 下載: <span id="net-down-text" class="text-green">0.00 Mbps</span></div>
+                    </div>
+                </div>
+
+                <div class="monitor-card static-data-card">
+                    <div class="monitor-meta"><span>硬體加速卡 GPU</span></div>
+                    <div class="gpu-display-box">
+                        <div class="gpu-name-line" id="gpu-name-text">RTX 5070 Ti</div>
+                        <div class="gpu-status-badge" id="gpu-status-text">STANDBY</div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -140,7 +169,6 @@
                 .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
         }
 
-        // 接收來自後端的系統安全通訊事件並推播到對話框
         function appendLog(subsystem, message, colorClass = '') {
             const body = document.getElementById('log-terminal-body');
             if(!body) return;
@@ -156,21 +184,31 @@
             appendLog('SYSTEM', '👥 已成功與雙向 Socket.IO 通訊對話框建立同步。', 'text-green');
         });
 
-        // 🌟 新增：透過 WebSocket 即時接收後端發送的電腦監測數據，刷新進度條
+        // 🌟 核心升級：動態接收並平鋪刷新 5 大全硬體指標
         socket.on('hw_update', (data) => {
-            // 1. 更新 CPU 數值與進度條
+            // 1. CPU & RAM
             document.getElementById('cpu-text').innerText = `${data.cpu}%`;
             document.getElementById('cpu-progress').style.width = `${data.cpu}%`;
-            
-            // 2. 更新 RAM 數值與進度條
             document.getElementById('ram-text').innerText = `${data.ram}%`;
             document.getElementById('ram-progress').style.width = `${data.ram}%`;
             
-            // 當使用率過高時，自動變色警示
-            if (data.cpu > 85) {
-                document.getElementById('cpu-progress').className = "progress-fill fill-red";
+            // 2. DISK 硬碟
+            document.getElementById('disk-text').innerText = `${data.disk_percent}% (${data.disk_free})`;
+            document.getElementById('disk-progress').style.width = `${data.disk_percent}%`;
+            
+            // 3. NET 網路頻寬
+            document.getElementById('net-up-text').innerText = data.net_up;
+            document.getElementById('net-down-text').innerText = data.net_down;
+            
+            // 4. GPU 顯示卡
+            document.getElementById('gpu-name-text').innerText = data.gpu_name;
+            document.getElementById('gpu-status-text').innerText = data.gpu_status;
+
+            // DISK 警示變色 (若硬碟使用率超過 90% 變紅警示)
+            if (data.disk_percent > 90) {
+                document.getElementById('disk-progress').className = "progress-fill fill-red";
             } else {
-                document.getElementById('cpu-progress').className = "progress-fill fill-green";
+                document.getElementById('disk-progress').className = "progress-fill fill-cyan";
             }
         });
 

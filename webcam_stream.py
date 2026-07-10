@@ -5,7 +5,8 @@ import hashlib
 import datetime
 import logging
 import asyncio
-import psutil  # 🌟 新增：引入系統硬體監控套件
+import psutil  
+import torch   # 🌟 新增：引入 PyTorch 用於偵測 GPU 狀態
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -43,26 +44,57 @@ def log_system_event(subsystem: str, message: str, level: str = "INFO"):
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 cameras = {}
 
-# 🌟 新增：Socket.IO 背景任務，每秒抓取一次電腦 CPU 與記憶體指標並廣播給前端
+# 🌟 全面升級：硬體背景輪詢器，計算更詳盡的電腦指標
 async def background_hw_monitor():
+    # 初始化網路計數器，用於計算每秒流量
+    old_net = psutil.net_io_counters()
+    
     while True:
         try:
+            # 1. CPU & RAM
             cpu_usage = psutil.cpu_percent(interval=None)
             ram_info = psutil.virtual_memory()
             ram_usage = ram_info.percent
             
-            # 透過 WebSocket 廣播事件 `hw_update` 給所有在線網頁
+            # 2. DISK 硬碟容量偵測 (計算儲存歷史錄影的專用硬碟)
+            disk_info = psutil.disk_usage(config.RECORD_DIR)
+            disk_usage = disk_info.percent
+            disk_free_gb = round(disk_info.free / (1024 ** 3), 1) # 轉為 GB
+            
+            # 3. NET 網速動態計算 (每秒流量相減)
+            new_net = psutil.net_io_counters()
+            sent_bytes = new_net.bytes_sent - old_net.bytes_sent
+            recv_bytes = new_net.bytes_recv - old_net.bytes_recv
+            old_net = new_net # 更新計數器
+            
+            # 轉為常見的 Mbps
+            net_up_mbps = round((sent_bytes * 8) / (1024 * 1024), 2)
+            net_down_mbps = round((recv_bytes * 8) / (1024 * 1024), 2)
+            
+            # 4. GPU 顯卡安全偵測
+            gpu_name = "NVIDIA GeForce RTX 5070 Ti"
+            gpu_status = "STANDBY" # 去 YOLO 模式下顯卡處於常駐待命狀態
+            if torch.cuda.is_available():
+                gpu_status = "CUDA ACTIVE (OFFLOADED)"
+
+            # 透過 WebSocket 將五大數據一體化廣播
             await sio.emit('hw_update', {
                 'cpu': cpu_usage,
                 'ram': ram_usage,
+                'disk_percent': disk_usage,
+                'disk_free': f"{disk_free_gb} GB 剩餘",
+                'net_up': f"{net_up_mbps} Mbps",
+                'net_down': f"{net_down_mbps} Mbps",
+                'gpu_name': gpu_name,
+                'gpu_status': gpu_status,
                 'time': datetime.datetime.now().strftime('%H:%M:%S')
             })
         except Exception as e:
-            print(f"硬體監控廣播異常: {e}")
-        await asyncio.sleep(1) # 每隔 1 秒刷新一次
+            print(f"全硬體監控廣播異常: {e}")
+        await asyncio.sleep(1)
 
 # ==================================================
-# ⏳ FastAPI Lifespan 異步生命週期管理器
+# ⏳ FastAPI Lifespan 生命週期管理器
 # ==================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -75,10 +107,7 @@ async def lifespan(app: FastAPI):
     print("="*50 + "\n")
     
     log_system_event("SYSTEM", "🚀 多鏡頭相機矩陣控制台已完全就緒。")
-    
-    # 🌟 新增：在系統啟動時，同時發動電腦監測的背景輪詢廣播任務
     sio.start_background_task(background_hw_monitor)
-    
     yield
     log_system_event("SYSTEM", "🛑 接收到關閉訊號，正在安全釋放所有硬體管道...")
     for cam in cameras.values(): cam.shutdown()
