@@ -35,13 +35,13 @@
             <div class="theater-controls">
                 <button class="btn-action" onclick="changeTheaterMode('high')">💎 切換高畫質</button>
                 <button class="btn-action" onclick="changeTheaterMode('smooth')">⚡ 切換流暢</button>
+                <button class="btn-action btn-zoom" onclick="toggleTheaterExpand()">🔎 全螢幕劇院</button>
                 <button class="btn-action" onclick="triggerTheaterSnapshot()">📸 手動截取當前快照</button>
             </div>
         </div>
     </div>
 
     <div id="bottom-dock-panel">
-        
         <div class="dock-tabs">
             <button class="tab-link active" onclick="switchDockTab('tab-recordings')">📁 歷史錄影回放</button>
             <button class="tab-link" onclick="switchDockTab('tab-logs')">💬 即時安防事件日誌</button>
@@ -68,37 +68,18 @@
 
         <div id="tab-monitor" class="dock-tab-content">
             <div class="monitor-dashboard-layout">
-                
                 <div class="monitor-card">
-                    <div class="monitor-meta">
-                        <span>中央處理器 CPU</span>
-                        <span id="cpu-text" class="metrics-val">0%</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div id="cpu-progress" class="progress-fill fill-green" style="width: 0%"></div>
-                    </div>
+                    <div class="monitor-meta"><span>中央處理器 CPU</span><span id="cpu-text" class="metrics-val">0%</span></div>
+                    <div class="progress-bar-container"><div id="cpu-progress" class="progress-fill fill-green" style="width: 0%"></div></div>
                 </div>
-                
                 <div class="monitor-card">
-                    <div class="monitor-meta">
-                        <span>隨機記憶體 RAM</span>
-                        <span id="ram-text" class="metrics-val">0%</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div id="ram-progress" class="progress-fill fill-blue" style="width: 0%"></div>
-                    </div>
+                    <div class="monitor-meta"><span>隨機記憶體 RAM</span><span id="ram-text" class="metrics-val">0%</span></div>
+                    <div class="progress-bar-container"><div id="ram-progress" class="progress-fill fill-blue" style="width: 0%"></div></div>
                 </div>
-
                 <div class="monitor-card">
-                    <div class="monitor-meta">
-                        <span>錄影儲存碟 DISK</span>
-                        <span id="disk-text" class="metrics-val">0 GB 剩餘</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div id="disk-progress" class="progress-fill fill-cyan" style="width: 0%"></div>
-                    </div>
+                    <div class="monitor-meta"><span>錄影儲存碟 DISK</span><span id="disk-text" class="metrics-val">0 GB 剩餘</span></div>
+                    <div class="progress-bar-container"><div id="disk-progress" class="progress-fill fill-cyan" style="width: 0%"></div></div>
                 </div>
-
                 <div class="monitor-card static-data-card">
                     <div class="monitor-meta"><span>串流網路頻寬 NET</span></div>
                     <div class="net-speed-display">
@@ -106,7 +87,6 @@
                         <div class="net-line">🔽 下載: <span id="net-down-text" class="text-green">0.00 Mbps</span></div>
                     </div>
                 </div>
-
                 <div class="monitor-card static-data-card">
                     <div class="monitor-meta"><span>硬體加速卡 GPU</span></div>
                     <div class="gpu-display-box">
@@ -114,46 +94,53 @@
                         <div class="gpu-status-badge" id="gpu-status-text">STANDBY</div>
                     </div>
                 </div>
-
             </div>
         </div>
-
     </div>
 
     <script>
         const socket = io();
-        let currentActiveCam = "{{ first_cam }}"; // 初始化追蹤當前啟動的相機
+        let currentActiveCam = "{{ first_cam }}";
 
-        // 🌟 修正點 1：相機通道切換，加入 Date.now() 防瀏覽器快取
         function switchMainCamera(camId) {
             currentActiveCam = camId;
             const timestamp = Date.now();
-            
-            // 更新上方導航列按鈕的高亮狀態
             document.querySelectorAll('.btn-nav').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${camId}`).classList.add('active');
-            
-            // 刷新大劇院標題與影像流路徑 (強制刷新)
             document.getElementById('current-cam-title').innerText = `🎬 正在監控：${camId.toUpperCase()}`;
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${camId}?mode=smooth&t=${timestamp}`;
-            
-            // 同步更新底部的錄影檢索欄位標籤並重新拉取清單
             document.getElementById('dock-selected-cam-label').innerText = camId.toUpperCase();
             loadBottomRecordings(camId);
         }
 
-        // 🌟 修正點 2：高低畫質切換，加入 Date.now() 徹底擊穿快取，讓畫質一秒變更！
         function changeTheaterMode(mode) {
             const timestamp = Date.now();
             document.getElementById('main-theater-stream').src = `/user_access/streaming/${currentActiveCam}?mode=${mode}&t=${timestamp}`;
         }
 
-        // 快照點擊觸發
+        // 🌟 新增：點擊放大按鈕時，切換劇院大盒子的全螢幕放大狀態
+        function toggleTheaterExpand() {
+            const theaterBox = document.getElementById('theater-box');
+            if (theaterBox) {
+                theaterBox.classList.toggle('expanded');
+                // 動態調整按鈕文字
+                const btn = document.querySelector('.btn-zoom');
+                if (theaterBox.classList.contains('expanded')) {
+                    btn.innerText = "❌ 退出全螢幕";
+                    btn.style.background = "#271414";
+                    btn.style.borderColor = "var(--accent-red)";
+                } else {
+                    btn.innerText = "🔎 全螢幕劇院";
+                    btn.style.background = "rgba(39, 39, 42, 0.8)";
+                    btn.style.borderColor = "var(--border-color)";
+                }
+            }
+        }
+
         function triggerTheaterSnapshot() {
             window.location.href = `/capture_snapshot/${currentActiveCam}`;
         }
 
-        // 底部分頁籤切換控制邏輯
         function switchDockTab(tabId) {
             document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.dock-tab-content').forEach(content => content.classList.remove('active'));
@@ -161,7 +148,6 @@
             document.getElementById(tabId).classList.add('active');
         }
 
-        // 非同步加載歷史 AVI 影片列表
         function loadBottomRecordings(camId) {
             const ul = document.getElementById('recording-ul');
             ul.innerHTML = '<li class="list-placeholder">正在檢索硬碟錄影檔案...</li>';
@@ -182,43 +168,22 @@
                 .catch(() => { ul.innerHTML = '<li class="list-placeholder">❌ 無法連線至後端路徑</li>'; });
         }
 
-        // 通訊對話框日誌生成器
-        function appendLog(subsystem, message, colorClass = '') {
-            const body = document.getElementById('log-terminal-body');
-            if(!body) return;
-            const line = document.createElement('div');
-            const timeStr = new Date().toLocaleTimeString();
-            line.className = `log-line ${colorClass}`;
-            line.innerText = `[${timeStr}] [${subsystem}] ${message}`;
-            body.appendChild(line);
-            body.scrollTop = body.scrollHeight; // 自動向下捲動
-        }
-
         socket.on('connect', () => {
             appendLog('SYSTEM', '👥 已成功與雙向 Socket.IO 通訊對話框建立同步。', 'text-green');
         });
 
-        // WebSocket 即時接收全硬體動態指標更新
         socket.on('hw_update', (data) => {
-            // 1. CPU & RAM 文字與進度條動態注入
             document.getElementById('cpu-text').innerText = `${data.cpu}%`;
             document.getElementById('cpu-progress').style.width = `${data.cpu}%`;
             document.getElementById('ram-text').innerText = `${data.ram}%`;
             document.getElementById('ram-progress').style.width = `${data.ram}%`;
-            
-            // 2. DISK 容量
             document.getElementById('disk-text').innerText = `${data.disk_percent}% (${data.disk_free})`;
             document.getElementById('disk-progress').style.width = `${data.disk_percent}%`;
-            
-            // 3. NET 網速
             document.getElementById('net-up-text').innerText = data.net_up;
             document.getElementById('net-down-text').innerText = data.net_down;
-            
-            // 4. GPU 顯示卡常駐資訊
             document.getElementById('gpu-name-text').innerText = data.gpu_name;
             document.getElementById('gpu-status-text').innerText = data.gpu_status;
 
-            // 超載警示安全機制
             if (data.disk_percent > 90) {
                 document.getElementById('disk-progress').className = "progress-fill fill-red";
             } else {
