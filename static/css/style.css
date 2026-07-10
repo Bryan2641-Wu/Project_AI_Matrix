@@ -353,3 +353,37 @@ body {
     from { transform: scale(0.98); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
+
+/* ==================================================
+   📱 響應式排版修正：防止窄螢幕下按鈕與元素跑版
+   ================================================== */
+
+/* 1. 讓頂部導覽列允許換行，不再強制壓在同一行 */
+#header-panel {
+    flex-wrap: wrap; /* 關鍵：允許內容換行 */
+    height: auto;    /* 讓高度能自動伸展 */
+    padding: 8px;
+    gap: 10px;
+}
+
+/* 2. 讓相機選擇列的按鈕也可以換行 */
+#cam-selector-bar {
+    flex-wrap: wrap; /* 如果放不下，自動換行 */
+    justify-content: center;
+}
+
+/* 3. 當螢幕真的太小（例如手機寬度）時，隱藏不重要的元素以節省空間 */
+@media (max-width: 768px) {
+    #hw-metrics {
+        display: none; /* 在窄螢幕下隱藏系統監測文字，騰出空間給按鈕 */
+    }
+    #main-matrix-layout {
+        height: calc(100vh - 350px); /* 手機端調整版型高度 */
+    }
+}
+
+/* 4. 底部導覽列分頁籤換行處理 */
+.dock-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+}

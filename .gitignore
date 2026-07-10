@@ -1,11 +1,23 @@
-# .gitignore
+# 排除 Python 編譯與暫存檔
 __pycache__/
 *.pyc
-data/*.db
-*.log
-storage/logs/
+*.pyo
+*.pyd
 
-# 🛑 核心防護：忽略隨時間累積的多媒體檔案
-storage/recordings/**/*.avi
-storage/snapshots/*.jpg
-static/cache/*.mp4
+# 排除環境設定與虛擬環境
+venv/
+env/
+.env
+.venv
+
+# ❗ 最關鍵：排除掉所有安防系統的動態數據與日誌 (千萬不能上傳這些！)
+storage/
+data/
+!storage/.keep
+
+# 排除編輯器設定
+.vscode/
+.idea/
+
+# 排除 Git 自身設定
+.git/
