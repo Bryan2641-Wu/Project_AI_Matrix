@@ -222,3 +222,63 @@ body {
     overflow: hidden;
 }
 .wall-box img { width: 100%; height: auto; display: block; }
+
+/* ==================================================
+   📊 補回來的電腦監測儀表板專用科技風樣式
+   ================================================== */
+.monitor-dashboard-layout {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    padding: 10px;
+}
+
+.monitor-card {
+    flex: 1;
+    background: #09090b;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.monitor-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.metrics-val {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* 進度條外盒 */
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #1c1c21;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* 進度條彩色動畫主體 */
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.4s ease-out; /* 動態平滑推進 */
+}
+
+/* 填色調色盤 */
+.fill-green { background: var(--accent-green); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+.fill-blue { background: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+.fill-red { background: var(--accent-red); box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); }
