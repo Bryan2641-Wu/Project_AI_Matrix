@@ -116,7 +116,6 @@ async def hardware_monitor_worker():
 # ==========================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # [STARTUP] 伺服器啟動邏輯
     print("\n" + "="*50)
     print("[AI 安防中心] 正在初始化多鏡頭核心矩陣...")
     
@@ -127,9 +126,8 @@ async def lifespan(app: FastAPI):
         model_path = "yolov8n.pt"
         print("⚠️ 未發現 ONNX 模型，自動降級至標準 .pt 權重模式。")
         
+    # 🌟 修正：直接載入模型即可，完全不要寫 .to("cpu") 或 .to("cuda")！
     shared_yolo = YOLO(model_path)
-    # 🌟 新增：強迫 YOLO 外殼在大腦初始化時不准碰不相容的 PyTorch CUDA 內核
-    shared_yolo.to("cpu") 
     print(f"👉 AI 大腦模型載入成功: {model_path}")
     
     for cam_id, source in config.CAMERA_LIST.items():

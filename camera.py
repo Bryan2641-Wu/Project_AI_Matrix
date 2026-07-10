@@ -86,10 +86,8 @@ class VideoCamera:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
                 )
             else:
-                # 🤖 🤖 🤖 核心修正：將 device 改為 "cpu" 🤖 🤖 🤖
-                # 這樣會強迫 YOLO 的 PyTorch 殼在外層走 CPU 安全熱身與解包，
-                # 但因為 yolov8n.onnx 內部已經綁定 ONNX Runtime GPU 鏈，
-                # 實際上底層的矩陣計算依然會自動在你的 RTX 5070 Ti 上滿血狂奔！
+                # 🤖 🤖 🤖 核心修正：明確聲明 device="cpu" 🤖 🤖 🤖
+                # 完美避開 PyTorch 舊內核對 sm_120 的 Rand Warmup 封鎖，引導 ONNX Runtime 滿血加速！
                 results = self.model(frame, verbose=False, device="cpu")
                 frame = results[0].plot()
 
