@@ -1,25 +1,11 @@
-# ==========================================
-# 🛡️ AI 智能監控系統 Git 排除清單
-# ==========================================
-
-# 1. 排除多媒體儲存與個人資料庫（避免專案爆肥與資安外洩）
-storage/
-data/
-
-# 2. 排除點擊回放時產生的臨時 MP4 轉碼快取
-static/cache/
-
-# 3. 排除 YOLO AI 模型權重檔
-*.pt
-*.engine
-
-# 4. 排除 Python 編譯快取與虛擬環境
+# .gitignore
 __pycache__/
 *.pyc
-.venv/
-venv/
-env/
+data/*.db
+*.log
+storage/logs/
 
-# 5. 排除作業系統產生的垃圾檔案
-.DS_Store
-Thumbs.db
+# 🛑 核心防護：忽略隨時間累積的多媒體檔案
+storage/recordings/**/*.avi
+storage/snapshots/*.jpg
+static/cache/*.mp4
