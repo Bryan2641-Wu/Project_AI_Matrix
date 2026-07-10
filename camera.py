@@ -86,13 +86,14 @@ class VideoCamera:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
                 )
             else:
-                # 🤖 🌟 終極修正：顯式指定 providers 為 CUDAExecutionProvider 
-                # 這樣外殼維持 device="cpu" 不觸發 PyTorch 崩潰，但底層推理會直接滿血送進 RTX 5070 Ti！
+                # 🤖 🌟 正確寫法：直接將 providers 參數傳遞給模型本身
+                # 這樣外殼走 CPU 完美防呆，而底層 ONNX 引擎會直接抽走 providers 參數，
+                # 讓你的 RTX 5070 Ti（Blackwell 架構）全面接管矩陣運算！
                 results = self.model(
                     frame, 
                     verbose=False, 
                     device="cpu", 
-                    overrides={"providers": ["CUDAExecutionProvider", "CPUExecutionProvider"]}
+                    providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
                 )
                 frame = results[0].plot()
 
