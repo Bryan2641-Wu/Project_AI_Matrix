@@ -2,22 +2,14 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 安全防護管理中樞 - 登入</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-
     <div class="login-container">
         <div class="login-card">
             <h2>AI 安防矩陣控制台</h2>
-            
-            {% if error %}
-                <div class="error-message">
-                    ⚠️ {{ error }}
-                </div>
-            {% endif %}
-
+            {% if error %}<div class="error-message">⚠️ {{ error }}</div>{% endif %}
             <form action="/login" method="POST">
                 <div class="form-group">
                     <label for="username">管理員帳號</label>
@@ -31,6 +23,5 @@
             </form>
         </div>
     </div>
-
 </body>
 </html>

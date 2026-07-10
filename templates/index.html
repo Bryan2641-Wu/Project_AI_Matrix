@@ -2,7 +2,6 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Smart Multi-Camera Matrix Central</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -11,20 +10,13 @@
 
     <div id="header-panel">
         <div class="brand-title">🛡️ AI 智慧安防多鏡頭監控矩陣</div>
-        <div id="hw-metrics">
-            CPU: <span id="cpu-val">0%</span> | 
-            RAM: <span id="ram-val">0%</span> | 
-            GPU 負載: <span id="gpu-load-val">0%</span> | 
-            GPU 溫度: <span id="gpu-temp-val">0°C</span> |
-            剩餘硬碟: <span id="disk-val">0 GB</span> |
-            在線端: <span id="online-count">0</span>
-        </div>
+        <div id="hw-metrics">核心高畫質純淨矩陣穩定運行中</div>
         <a href="/logout" class="btn-logout">🚪 安全登出</a>
     </div>
 
     <div id="matrix-container">
         <div id="video-grid">
-            {% for cam_id, source in cameras.items() %}
+            {% for cam_id, source in camera_channels.items() %}
                 <div class="cam-box" id="box-{{ cam_id }}" onclick="toggleExpand('{{ cam_id }}')">
                     <div class="cam-title">🎬 頻道: {{ cam_id.upper() }} <span class="zoom-hint">(點擊放大)</span></div>
                     <img id="stream-{{ cam_id }}" src="/user_access/streaming/{{ cam_id }}?mode=smooth" alt="攝影機線路中斷">
@@ -36,8 +28,8 @@
                 </div>
             {% endfor %}
             
-            {% if cameras|length < 4 %}
-                {% for i in range(4 - (cameras|length)) %}
+            {% if camera_channels|length < 4 %}
+                {% for i in range(4 - (camera_channels|length)) %}
                     <div class="cam-box backup-grid">
                         <div class="cam-title">💤 備用監視頻道</div>
                         <div class="no-signal">NO SIGNAL (等待線路掛載)</div>
@@ -51,35 +43,16 @@
             <div class="selector-group">
                 <label for="cam-select">選擇相機：</label>
                 <select id="cam-select" onchange="loadRecordingsList()">
-                    {% for cam_id in cameras.keys() %}
+                    {% for cam_id in camera_channels.keys() %}
                         <option value="{{ cam_id }}">{{ cam_id.upper() }}</option>
                     {% endfor %}
                 </select>
             </div>
-
             <div id="video-list-box">
                 <ul id="recording-ul">
                     <li class="list-placeholder">正在載入已封裝的監控列表...</li>
                 </ul>
             </div>
-
-            <div id="playback-window" style="display:none;">
-                <h4>🎥 NVIDIA 加速轉碼播放中</h4>
-                <video id="player" controls width="100%"></video>
-            </div>
-        </div>
-    </div>
-
-    <div id="console-wrapper">
-        <h3>📰 核心安防矩陣實時日誌盒 (WebSocket 即時聯動)</h3>
-        <div id="log-console">
-            {% for log in history_logs %}
-                {% if '⚠️' in log[1] or '🚨' in log[1] or '警報' in log[1] or '警告' in log[1] %}
-                    <div class="log-line log-alert">[{{ log[0] }}] {{ log[1] }}</div>
-                {% else %}
-                    <div class="log-line log-info">[{{ log[0] }}] {{ log[1] }}</div>
-                {% endif %}
-            {% endfor %}
         </div>
     </div>
 
