@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 title AI Smart Multi-Camera Matrix Central
 echo ==================================================
 echo   🚀 正在激活 Conda 並啟動 2026 多鏡頭 AI 安防系統...

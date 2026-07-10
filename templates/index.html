@@ -1,153 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-    <title>📊 AI 智慧多鏡頭安防矩陣中樞</title>
-    <meta charset="utf-8">
-    <style>
-        body { background: #09090b; color: #f4f4f5; font-family: -apple-system, sans-serif; padding: 20px; margin: 0; }
-        .main-container { max-width: 1000px; margin: 0 auto; text-align: center; }
-        .btn { border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
-        .log-table th { background: #27272a; color: #a1a1aa; text-align: left; padding: 10px; font-size: 13px; }
-        .log-table td { padding: 10px; border-bottom: 1px solid #27272a; font-size: 12px; text-align: left; }
-        
-        /* 🌟 新增：分頁導覽列 CSS */
-        .tab-bar { display: flex; gap: 8px; border-bottom: 2px solid #27272a; margin-bottom: 20px; }
-        .tab-btn { background: none; border: none; color: #71717a; padding: 10px 16px; font-size: 14px; font-weight: bold; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
-        .tab-btn:hover { color: #e4e4e7; }
-        .tab-btn.active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* 🌟 新增：四格多鏡頭巡檢矩陣網格 */
-        .matrix-grid { display: grid; grid-template-columns: repeat(2, 11fr); gap: 15px; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 15px; box-sizing: border-box; }
-        .matrix-cell { background: #000; border: 1px solid #3f3f46; border-radius: 6px; overflow: hidden; position: relative; }
-        .matrix-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); color: #4ade80; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; }
-        
-        /* 相機選擇切換鈕 */
-        .cam-selector-btn { background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .cam-selector-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Multi-Camera Matrix Central</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-    <div class="main-container">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.5px;">🌌 AI 智慧多鏡頭安防矩陣中樞</h2>
-            <a href="/logout" style="color: #ef4444; font-size: 13px; font-weight: bold; text-decoration: none;">🚪 安全登出</a>
+
+    <div id="header-panel">
+        <div class="brand-title">🛡️ AI 智慧安防多鏡頭監控矩陣</div>
+        <div id="hw-metrics">
+            CPU: <span id="cpu-val">0%</span> | 
+            RAM: <span id="ram-val">0%</span> | 
+            GPU 負載: <span id="gpu-load-val">0%</span> | 
+            GPU 溫度: <span id="gpu-temp-val">0°C</span> |
+            剩餘硬碟: <span id="disk-val">0 GB</span> |
+            在線端: <span id="online-count">0</span>
         </div>
-
-        <div class="metrics-dashboard" style="display: flex; gap: 12px; margin-bottom: 20px;">
-            <div style="flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; padding: 12px; border-radius: 6px; text-align: left;">
-                <div style="font-size: 11px; color: #a1a1aa; font-weight: bold;">💻 CPU 負載</div>
-                <div style="font-size: 20px; font-weight: bold; color: #3b82f6; margin-top: 4px;" id="metric-cpu">0%</div>
-            </div>
-            <div style="flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; padding: 12px; border-radius: 6px; text-align: left;">
-                <div style="font-size: 11px; color: #a1a1aa; font-weight: bold;">🧠 記憶體佔用</div>
-                <div style="font-size: 20px; font-weight: bold; color: #10b981; margin-top: 4px;" id="metric-ram">0%</div>
-            </div>
-            <div style="flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; padding: 12px; border-radius: 6px; text-align: left;" id="gpu-card-box">
-                <div style="font-size: 11px; color: #a1a1aa; font-weight: bold;">🚀 GPU 獨立顯卡 (CUDA)</div>
-                <div style="font-size: 13px; font-weight: bold; color: #e4e4e7; margin-top: 5px;" id="metric-gpu">偵測中...</div>
-            </div>
-            <div style="flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; padding: 12px; border-radius: 6px; text-align: left;">
-                <div style="font-size: 11px; color: #a1a1aa; font-weight: bold;">👥 在線管理員 (<span id="user-count">0</span>)</div>
-                <div style="font-size: 13px; font-weight: bold; color: #a855f7; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="metric-users">無人連線</div>
-            </div>
-            <div style="flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; padding: 12px; border-radius: 6px; text-align: left;">
-                <div style="font-size: 11px; color: #a1a1aa; font-weight: bold;">💾 硬碟剩餘空間</div>
-                <div style="font-size: 20px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="metric-disk">0 GB</div>
-            </div>
-        </div>
-
-        <div class="tab-bar">
-            <button class="tab-btn active" data-tab="pane-single">📹 乾淨單鏡頭主控台</button>
-            <button class="tab-btn" data-tab="pane-matrix">🎛️ 四格多鏡頭巡檢矩陣</button>
-        </div>
-
-        <div id="pane-single" class="tab-content active">
-            <div style="background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 15px; display: inline-block; width: 100%; box-sizing: border-box; position: relative;">
-                
-                <img id="webcam-stream" src="/user_access/streaming/cam_0?mode=smooth" style="width: 100%; max-width: 960px; height: auto; border-radius: 6px; background-color: #000; display: block; margin: 0 auto;">
-                
-                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; max-width: 960px; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 10px;">
-                    <div style="display: flex; gap: 10px;">
-                        <button id="btn-snapshot" class="btn" style="background: #3b82f6; color: white;">📸 擷取此鏡頭快照</button>
-                        <button id="btn-toggle-stream" data-streaming="true" class="btn" style="background: #ef4444; color: white;">🛑 中斷視訊畫面</button>
-                    </div>
-                    <div style="display: flex; gap: 6px;" id="cam-selector-wrapper">
-                        {% for cam_id in cameras.keys() %}
-                            <button class="cam-selector-btn {% if loop.first %}active{% endif %}" data-cam="{{ cam_id }}">📺 頻道 {{ cam_id.upper() }}</button>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 20px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 8px; padding: 15px; text-align: left;">
-                <h3 style="color: #f3f4f6; margin-top: 0; font-size: 14px;">🎞️ 歷史紀錄回放中心 (<span id="playback-cam-title" style="color:#3b82f6;">CAM_0</span> 頻道影片)</h3>
-                <table style="width: 100%;">
-                    <tr>
-                        <td style="width: 40%; vertical-align: top; padding-right: 15px;">
-                            <div style="background: #09090b; border: 1px solid #27272a; border-radius: 6px; height: 180px; overflow-y: auto; padding: 10px;" id="video-list-box"></div>
-                        </td>
-                        <td style="width: 60%; vertical-align: top; background: #000; border-radius: 6px; position: relative;">
-                            <div id="loading-overlay" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); color: #3b82f6; text-align:center; padding-top: 75px; font-weight:bold;">⚡ AI 正在動態生成 MP4 中...</div>
-                            <video id="playback-player" controls style="width: 100%; height: 180px; display: block;"><source id="player-source" src="" type="video/mp4"></video>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div id="pane-matrix" class="tab-content">
-            <div class="matrix-grid">
-                {% for cam_id in cameras.keys() %}
-                    <div class="matrix-cell">
-                        <img class="matrix-stream-img" data-src="/user_access/streaming/{{ cam_id }}?mode=smooth" src="" style="width: 100%; height: auto; display: block; background: #000;">
-                        <div class="matrix-label">🔴 LIVE | {{ cam_id.upper() }}</div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div style="margin-top: 20px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 8px; padding: 15px; text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="color: #f3f4f6; margin: 0; font-size: 14px;">📟 WebSocket 即時事件串流日誌</h3>
-                <button id="btn-clear-log" style="background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer;">清除面板</button>
-            </div>
-            <div id="log-console" style="background: #09090b; border: 1px solid #27272a; border-radius: 6px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 12px; padding: 10px; line-height: 1.6;">
-                {% for log in history_logs %}
-                    {# 🌟 結構化拆分：把 Jinja2 判斷式移到標籤外面，完美解決 VS Code 波浪紋 #}
-                    {% if '⚠️' in log[1] or '🚨' in log[1] or '警報' in log[1] or '警告' in log[1] %}
-                        <div style="color: #f87171;">[{{ log[0] }}] {{ log[1] }}</div>
-                    {% else %}
-                        <div style="color: #4ade80;">[{{ log[0] }}] {{ log[1] }}</div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-
-        <div style="margin-top: 20px; margin-bottom: 40px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 8px; padding: 15px; text-align: left;">
-            <h3 style="color: #f3f4f6; margin-top: 0; font-size: 14px;">📊 SQLite 歷史事件進階稽核與資料導出</h3>
-            <div style="display: flex; gap: 10px; align-items: center; background: #09090b; padding: 10px; border-radius: 6px; border: 1px solid #27272a; margin-bottom: 15px; flex-wrap: wrap;">
-                <label style="font-size: 12px; color: #a1a1aa;">開始:</label><input type="date" id="search-start-date" style="background:#1c1c1e; border:1px solid #3f3f46; color:#fff; padding:4px; border-radius:4px; font-size:12px;">
-                <label style="font-size: 12px; color: #a1a1aa;">結束:</label><input type="date" id="search-end-date" style="background:#1c1c1e; border:1px solid #3f3f46; color:#fff; padding:4px; border-radius:4px; font-size:12px;">
-                <select id="search-event-type" style="background: #1c1c1e; border: 1px solid #3f3f46; color: #fff; padding: 4px; border-radius: 4px; font-size: 12px;">
-                    <option value="ALL">全部 (ALL)</option><option value="FACE">AI 人類辨識 (FACE)</option><option value="SYSTEM">系統錄影維護 (SYSTEM)</option>
-                </select>
-                <button id="btn-search-logs" class="btn" style="background: #3b82f6; color: white; padding: 5px 12px; font-size: 12px;">🔍 篩選查詢</button>
-                <button id="btn-export-csv" class="btn" style="background: #10b981; color: white; padding: 5px 12px; font-size: 12px;">📊 匯出 CSV</button>
-            </div>
-            <div style="max-height: 180px; overflow-y: auto; background: #09090b; border: 1px solid #27272a; border-radius: 6px;">
-                <table class="log-table" style="width: 100%; border-collapse: collapse;">
-                    <thead><tr><th style="width: 25%;">🕒 歷史時間軸</th><th style="width: 20%;">🏷️ 分類標籤</th><th style="width: 55%;">💬 詳細日誌訊息</th></tr></thead>
-                    <tbody id="audit-table-body"><tr><td colspan="3" style="color: #52525b; text-align: center; padding: 20px;">💡 請設定上方篩選條件並點擊「篩選查詢」開始審計資料庫。</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-
+        <a href="/logout" class="btn-logout">🚪 安全登出</a>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="{{ url_for('static', path='js/stream.js') }}"></script>
+    <div id="matrix-container">
+        <div id="video-grid">
+            {% for cam_id, source in cameras.items() %}
+                <div class="cam-box" id="box-{{ cam_id }}" onclick="toggleExpand('{{ cam_id }}')">
+                    <div class="cam-title">🎬 頻道: {{ cam_id.upper() }} <span class="zoom-hint">(點擊放大)</span></div>
+                    <img id="stream-{{ cam_id }}" src="/user_access/streaming/{{ cam_id }}?mode=smooth" alt="攝影機線路中斷">
+                    <div class="cam-controls" onclick="event.stopPropagation();">
+                        <button class="btn-action" onclick="changeMode('{{ cam_id }}', 'high')">💎 高畫質</button>
+                        <button class="btn-action" onclick="changeMode('{{ cam_id }}', 'smooth')">⚡ 流暢</button>
+                        <a class="btn-action btn-link" href="/capture_snapshot/{{ cam_id }}">📸 手動截圖</a>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            {% if cameras|length < 4 %}
+                {% for i in range(4 - (cameras|length)) %}
+                    <div class="cam-box backup-grid">
+                        <div class="cam-title">💤 備用監視頻道</div>
+                        <div class="no-signal">NO SIGNAL (等待線路掛載)</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div id="side-panel">
+            <h3>📁 防斷電歷史錄影回放</h3>
+            <div class="selector-group">
+                <label for="cam-select">選擇相機：</label>
+                <select id="cam-select" onchange="loadRecordingsList()">
+                    {% for cam_id in cameras.keys() %}
+                        <option value="{{ cam_id }}">{{ cam_id.upper() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="video-list-box">
+                <ul id="recording-ul">
+                    <li class="list-placeholder">正在載入已封裝的監控列表...</li>
+                </ul>
+            </div>
+
+            <div id="playback-window" style="display:none;">
+                <h4>🎥 NVIDIA 加速轉碼播放中</h4>
+                <video id="player" controls width="100%"></video>
+            </div>
+        </div>
+    </div>
+
+    <div id="console-wrapper">
+        <h3>📰 核心安防矩陣實時日誌盒 (WebSocket 即時聯動)</h3>
+        <div id="log-console">
+            {% for log in history_logs %}
+                {% if '⚠️' in log[1] or '🚨' in log[1] or '警報' in log[1] or '警告' in log[1] %}
+                    <div class="log-line log-alert">[{{ log[0] }}] {{ log[1] }}</div>
+                {% else %}
+                    <div class="log-line log-info">[{{ log[0] }}] {{ log[1] }}</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="/static/js/stream.js"></script>
 </body>
 </html>
