@@ -10,7 +10,7 @@ import config
 class VideoCamera:
     def __init__(self, cam_id, source):
         """
-        初始化個別相機頻道 (動態時間戳 OSD 安全烙印版)
+        初始化個別相機頻道 (高質感 OSD 時間戳安防版)
         """
         self.cam_id = cam_id
         self.source = source
@@ -83,7 +83,7 @@ class VideoCamera:
         self.last_split_time = time.time()
 
     def _capture_worker(self):
-        """背景核心執行緒：負責拉取畫面、烙印時間戳、寫入硬碟檔"""
+        """背景核心執行緒：負責拉取畫面、烙印極簡高質感時間戳、寫入硬碟檔"""
         while self.is_running:
             start_time = time.time()
             ret, frame = self.cap.read()
@@ -93,19 +93,35 @@ class VideoCamera:
                 cv2.putText(
                     frame, f"CHANNEL [{self.cam_id.upper()}] NO SIGNAL", 
                     (int(self.real_width*0.1), int(self.real_height*0.5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+                    cv2.FONT_HERSHEY_DUPLEX, 0.7, (80, 80, 240), 1, cv2.LINE_AA
                 )
             else:
-                # 🌟 核心升級：動態烙印高對比安防時間戳 (OSD 浮水印)
+                # 🌟 核心升級：精緻化 OSD 浮水印（專業半透明黑底白字襯條）
                 timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                display_text = f"{self.cam_id.upper()} | {timestamp_str}"
+                display_text = f"● {self.cam_id.upper()}   {timestamp_str}"
                 
-                # A. 繪製黑色文字外邊緣（陰影層），確保鏡頭拍到白天、日光燈等強光亮色背景時字體依然清晰
-                cv2.putText(frame, display_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4, cv2.LINE_AA)
-                # B. 繪製鮮綠色主文字層，營造專業軍規監控科技感
-                cv2.putText(frame, display_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1, cv2.LINE_AA)
+                font = cv2.FONT_HERSHEY_DUPLEX
+                font_scale = 0.45
+                thickness = 1
+                
+                # 動態精確計算文字長寬，以此動態生成地墊背板
+                text_size, _ = cv2.getTextSize(display_text, font, font_scale, thickness)
+                text_w, text_h = text_size
+                
+                # 建立疊加層實作 60% 半透明極簡黑（Tech Black）背景塊
+                overlay = frame.copy()
+                pad_x, pad_y = 15, 12
+                start_point = (15, 15)
+                end_point = (15 + text_w + pad_x, 15 + text_h + pad_y)
+                
+                cv2.rectangle(overlay, start_point, end_point, (24, 24, 28), -1)
+                alpha = 0.65  # 襯底不透明度
+                cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+                
+                # 繪製高雅科技純白文字（Off-White）
+                text_position = (15 + int(pad_x/2), 15 + text_h + int(pad_y/2) - 1)
+                cv2.putText(frame, display_text, text_position, font, font_scale, (245, 245, 245), thickness, cv2.LINE_AA)
             
-            # 關鍵順序：先烙印好時間戳，再手牽手寫入影片檔與傳給全域變數
             if self.out is not None: self.out.write(frame)
             self.Frame = frame
             
