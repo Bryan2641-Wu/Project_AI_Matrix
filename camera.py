@@ -10,7 +10,7 @@ import config
 class VideoCamera:
     def __init__(self, cam_id, source):
         """
-        初始化個別相機頻道 (工業級安防版)
+        初始化個別相機頻道 (動態時間戳 OSD 安全烙印版)
         """
         self.cam_id = cam_id
         self.source = source
@@ -39,7 +39,7 @@ class VideoCamera:
         self.out = None
         self._init_next_video_writer()
         
-        # 5. 啟動背景執行緒
+        # 5. 啟動背景守護執行緒
         self.thread = threading.Thread(target=self._capture_worker, daemon=True)
         self.thread.start()
 
@@ -62,12 +62,13 @@ class VideoCamera:
             try:
                 os.remove(oldest_file[0])
                 total_size -= oldest_file[2]
+                print(f"⚠️ 空間已達上限 ({limit_gb}GB)，執行循環覆蓋：已自動刪除最舊影片 {oldest_file[0]}")
             except Exception as e:
                 print(f"清理檔案失敗: {e}")
 
     def _init_next_video_writer(self):
         """建立寫入器並執行空間檢查"""
-        self._enforce_storage_limit(limit_gb=100) # 每次建立新片段時檢查硬碟
+        self._enforce_storage_limit(limit_gb=100) 
         
         if self.out is not None: self.out.release()  
             
@@ -82,12 +83,29 @@ class VideoCamera:
         self.last_split_time = time.time()
 
     def _capture_worker(self):
+        """背景核心執行緒：負責拉取畫面、烙印時間戳、寫入硬碟檔"""
         while self.is_running:
             start_time = time.time()
             ret, frame = self.cap.read()
+            
             if not ret:
                 frame = np.zeros((self.real_height, self.real_width, 3), dtype=np.uint8)
+                cv2.putText(
+                    frame, f"CHANNEL [{self.cam_id.upper()}] NO SIGNAL", 
+                    (int(self.real_width*0.1), int(self.real_height*0.5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2
+                )
+            else:
+                # 🌟 核心升級：動態烙印高對比安防時間戳 (OSD 浮水印)
+                timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                display_text = f"{self.cam_id.upper()} | {timestamp_str}"
+                
+                # A. 繪製黑色文字外邊緣（陰影層），確保鏡頭拍到白天、日光燈等強光亮色背景時字體依然清晰
+                cv2.putText(frame, display_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4, cv2.LINE_AA)
+                # B. 繪製鮮綠色主文字層，營造專業軍規監控科技感
+                cv2.putText(frame, display_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1, cv2.LINE_AA)
             
+            # 關鍵順序：先烙印好時間戳，再手牽手寫入影片檔與傳給全域變數
             if self.out is not None: self.out.write(frame)
             self.Frame = frame
             
